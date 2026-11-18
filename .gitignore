@@ -1,9 +1,10 @@
 ﻿__pycache__/
 *.py[cod]
-*.class
+*$py.class
 .pytest_cache/
 .vscode/
 .venv/
 venv/
 *.log
 .DS_Store
+reports/
