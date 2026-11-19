@@ -11,9 +11,9 @@ Hệ thống mô phỏng sự kiện rời rạc (DES) mạng hàng đợi **Dri
 | Mốc | Nội dung chính | Trạng thái | Bằng chứng kiểm thử |
 | :--- | :--- | :--- | :--- |
 | **M1** | Khảo sát framework `bkitevsim`, xử lý lỗi wrap-around của `LadderQueue` bằng `safe_bucket_width(t_end)`. | **ĐÃ XONG** | Pass `3/3` tests (`tests/test_m1_framework.py`) |
-| **M2** | Hiện thực lõi dữ liệu, CRN 5 luồng RNG, `CarSourceLP`, `StationLP` (tái sử dụng cho 6 mô hình đơn), `MonitorLP`, công thức giải tích + $CI_{95\%}$ và chạy **Thí nghiệm A**. | **ĐÃ XONG** | Pass `5/5` tests (M1+M2); **Exp A**: `144/144` chỉ số PASS (18 cấu hình x 30 seeds, sai số max `1.97%`, Little max `0.071%`) |
+| **M2** | Hiện thực lõi dữ liệu, CRN 5 luồng RNG, `CarSourceLP`, `StationLP` (tái sử dụng cho 6 mô hình đơn), `MonitorLP`, công thức giải tích + CI 95% và chạy **Thí nghiệm A**. | **ĐÃ XONG** | Pass `5/5` tests (M1+M2); **Exp A**: `144/144` chỉ số PASS (18 cấu hình x 30 seeds, sai số max `1.97%`, Little max `0.071%`) |
 | **M3** | Hiện thực `PickupLP(StationLP)` kèm bảng `join_table[car_id]` đối xứng, ghép mạng 4 trạm (6 LP), thêm chế độ `blocking_order` cho Exp D. | **ĐÃ XONG** | Pass `12/12` tests (M1+M2+M3) gồm 3 ca Join, đảo thứ tự event trễ 0, thu gọn Jackson, khớp 2 Dispatcher |
-| **M4** | Bộ chạy thí nghiệm đa tiến trình có Checkpoint/Resume; chạy trọn bộ **Exp B, Exp C (48 cấu hình), Exp D** và xuất **5 biểu đồ** báo cáo. | **ĐÃ XONG** | `53/53` cấu hình (`1 600` lượt chạy): `100%` cân bằng dòng, `100%` đạt chuẩn $CI_{95\%}$, xuất đủ 4 bảng CSV + 5 ảnh PNG |
+| **M4** | Bộ chạy thí nghiệm đa tiến trình có Checkpoint/Resume; chạy trọn bộ **Exp B, Exp C (48 cấu hình), Exp D** và xuất **5 biểu đồ** báo cáo. | **ĐÃ XONG** | `53/53` cấu hình (`1 600` lượt chạy): `100%` cân bằng dòng, `100%` đạt chuẩn CI 95%, xuất đủ 4 bảng CSV + 5 ảnh PNG |
 | **M5** | Rẽ nhánh `multithread_dev` từ `sequential_dev`: cài đặt lát cắt Coroutine (`BkSysCoLogicalProcess` + `BkSysFuture`) và so sánh tốc độ/độ khớp với bản đồng bộ. | **KẾ TIẾP** | Sẽ triển khai trong `drivethru/engines/` |
 
 ---
@@ -140,16 +140,16 @@ Chạy 53 cấu hình duy nhất (1 600 lượt chạy, có lưu checkpoint vào
 
 ## 6. Tóm tắt Số liệu Thực nghiệm Chuẩn đã Chạy được (Để Examiner đối chiếu)
 
-* **Exp A (Validation 6 mô hình đơn — 540 lượt):** `144/144` chỉ số PASS (`140/144` nằm trong $CI_{95\%}$, sai số max `1.97%`, Little max `0.071%`).
+* **Exp A (Validation 6 mô hình đơn — 540 lượt):** `144/144` chỉ số PASS (`140/144` nằm trong CI 95%, sai số max `1.97%`, Little max `0.071%`).
 * **Exp B (Baseline $c_2=1, K_1=8$ & Đối chiếu $K_1=30$):**
-  * Nút cổ chai nằm rõ ở **Payment** ($U_2 = 74.6\%$ tại Peak $\lambda=0.6$, $86.6\%$ tại Heavy $\lambda=0.7$), đẩy $T$ lên `8.317 ± 0.140` phút tại Peak (vượt SLA 8 phút) và `12.701 ± 0.620` phút tại Heavy.
+  * Nút cổ chai nằm rõ ở **Payment** ($U_2 = 74.6$% tại Peak $\lambda=0.6$, $86.6$% tại Heavy $\lambda=0.7$), đẩy $T$ lên `8.317 ± 0.140` phút tại Peak (vượt SLA 8 phút) và `12.701 ± 0.620` phút tại Heavy.
   * Tại $K_1=30, \lambda=0.6$: Xấp xỉ Fork–Join lệch **`1.51%`** (`8.366` vs. `8.494` phút); ca thu gọn $1/\mu_3 = 0.01$ khớp mạng Jackson lệch **`0.45%`** (`7.944` vs. `7.980` phút).
 * **Exp C (Độ nhạy & Tối ưu — 48 cấu hình):**
   * Tăng $c_2 = 1 \to 2$ (tại $K_1=8$) giảm $T$ tới **`34.9%`** tại Peak (`8.317 -> 5.415` phút) và **`54.4%`** tại Heavy (`12.701 -> 5.790` phút). Tăng tiếp $c_2 = 2 \to 3$ chỉ giảm thêm `1.6%–2.0%` (lợi ích biên bão hòa).
-  * **Cấu hình tối ưu khuyến nghị:** **`c2 = 2, K1 = 6`** (Peak: $T = 5.368 \pm 0.030$ phút, $P_b = 0.63 \pm 0.07\%$; Heavy: $T = 5.679 \pm 0.029$ phút, $P_b = 1.34 \pm 0.12\%$ — đạt vững chắc SLA $T \le 8$ phút & $P_b \le 5\%$ trên mọi mức tải).
+  * **Cấu hình tối ưu khuyến nghị:** **`c2 = 2, K1 = 6`** (Peak: $T = 5.368 \pm 0.030$ phút, $P_b = 0.63 \pm 0.07$%; Heavy: $T = 5.679 \pm 0.029$ phút, $P_b = 1.34 \pm 0.12$% — đạt vững chắc SLA $T \le 8$ phút & $P_b \le 5$% trên mọi mức tải).
 * **Exp D (Non-blocking vs. Blocking tại $c_2=2, K_1=8$):**
   * Tại Peak ($\lambda = 0.6$): Chế độ Blocking làm $U_1$ tăng vọt `44.9% -> 84.7%`, $P_b$ tăng `0.14% -> 5.65%` (vỡ SLA 5%), $T$ tăng `5.415 -> 8.722` phút (+61.1%, vỡ SLA 8 phút). Giao tiếp Non-blocking giúp giảm **`37.9%`** thời gian đáp ứng tại Peak và **`41.7%`** tại Heavy.
-* **Ghi chú kỹ thuật về Little's Law cho Examiner:** Trên toàn bộ `53/53` cấu hình, sai số Định luật Little tổng hợp đều $\le 0.335\%$ (trung bình `0.107%`). Trong `1 600` lượt đơn lẻ, có đúng `1` lượt tải cực cao (`C_lam7_c2_1_K1_8`, `seed=8`, $\rho_2=0.875$) có sai số cục bộ `1.26%` do biến động hàng đợi còn lại ở mốc cuối $t_{\text{end}}=10\,000$ phút; toàn bộ `1 599` lượt còn lại đều $\le 1\%$.
+* **Ghi chú kỹ thuật về Little's Law cho Examiner:** Trên toàn bộ `53/53` cấu hình, sai số Định luật Little tổng hợp đều $\le 0.335$% (trung bình `0.107%`). Trong `1 600` lượt đơn lẻ, có đúng `1` lượt tải cực cao (`C_lam7_c2_1_K1_8`, `seed=8`, $\rho_2=0.875$) có sai số cục bộ `1.26%` do biến động hàng đợi còn lại ở mốc cuối $t_{\text{end}}=10\,000$ phút; toàn bộ `1 599` lượt còn lại đều $\le 1$%.
 
 ---
 
