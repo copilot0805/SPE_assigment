@@ -163,20 +163,20 @@ Chạy 53 cấu hình duy nhất (1 600 lượt chạy, có lưu checkpoint vào
 
 ---
 
-## Ph?n m? r?ng M5 ? So s?nh 3 Ki?n tr?c Engine DES (Nh?nh `multithread_dev`)
+## Phần mở rộng M5 — So sánh 3 Kiến trúc Engine DES (Nhánh `multithread_dev`)
 
-* **T?i li?u chi ti?t:** Xem `ROADMAP_M5_MULTITHREAD.md` (10 b??c SPE, ph?n t?ch CPython 3.12 GIL & b?ng s? li?u ??y ??).
-* **M? ngu?n 3 Engine (`drivethru/engines/`):** `sequential_engine.py`, `coroutine_engine.py` (`BkSysCoEventLoop` + `SafeCoLogicalProcess` + `BkSysFuture` t?i b?ng Join), `multithread_engine.py` (6 `threading.Thread` + `ThreadedClockCoordinator`).
-* **Ki?m ch?ng t? ??ng (17/17 tests PASS):**
+* **Tài liệu chi tiết:** Xem `ROADMAP_M5_MULTITHREAD.md` (10 bước SPE, phân tích CPython 3.12 GIL & bảng số liệu đầy đủ).
+* **Mã nguồn 3 Engine (`drivethru/engines/`):** `sequential_engine.py`, `coroutine_engine.py` (`BkSysCoEventLoop` + `SafeCoLogicalProcess` + `BkSysFuture` tại bảng Join), `multithread_engine.py` (6 `threading.Thread` + `ThreadedClockCoordinator`).
+* **Kiểm chứng tự động (17/17 tests PASS):**
 ```powershell
 python -m unittest discover -s tests -p "test_m*.py" -v
 ```
-* **T?i l?p Benchmark 1-Core & Bi?u ?? (`fig6`, `fig7`):**
+* **Tái lập Benchmark 1-Core & Biểu đồ (`fig6`, `fig7`):**
 ```powershell
 python -m drivethru.experiments.run_m5_benchmark
 python -m drivethru.experiments.plot_m5_benchmark
 ```
-* **T?m t?t k?t qu? t?i $t_{end} = 10000$ ph?t ($\lambda = 0.6$, $c_2=2, K_1=6$, 1-Core, $R=10$ seeds):**
-  * **Single-thread (Sequential):** `1.2857 ? 0.0725s` (`1.00x`, `69,726 ev/s`, `0.451 MB`, `FidErr = 0.0`).
-  * **Virtual Multi-thread (Coroutine + BkSysFuture):** `3.3657 ? 0.1046s` (`2.62x`, `26,529 ev/s`, `0.468 MB`, `FidErr = 0.0`).
-  * **OS Multi-thread (6 Threads + Coordinator):** `6.3266 ? 0.1306s` (`4.92x`, `14,102 ev/s`, `0.475 MB`, `FidErr = 0.0`).
+* **Tóm tắt kết quả tại $t_{end} = 10000$ phút ($\lambda = 0.6$, $c_2=2, K_1=6$, 1-Core, $R=10$ seeds):**
+  * **Single-thread (Sequential):** `1.2857 ± 0.0725s` (`1.00x`, `69,726 ev/s`, `0.451 MB`, `FidErr = 0.0`).
+  * **Virtual Multi-thread (Coroutine + BkSysFuture):** `3.3657 ± 0.1046s` (`2.62x`, `26,529 ev/s`, `0.468 MB`, `FidErr = 0.0`).
+  * **OS Multi-thread (6 Threads + Coordinator):** `6.3266 ± 0.1306s` (`4.92x`, `14,102 ev/s`, `0.475 MB`, `FidErr = 0.0`).
