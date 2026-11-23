@@ -1,4 +1,5 @@
-﻿from typing import Dict
+﻿import math
+from typing import Dict
 from bkitevsim.core import Event, BkSysLogicalProcess
 from drivethru.core.distributions import MultiStreamRNG
 from drivethru.core.event_types import EventType, LPID
@@ -6,8 +7,6 @@ from drivethru.core.state import CarRecord
 
 
 class CarSourceLP(BkSysLogicalProcess):
-    """LP0: Sinh xe với khoảng cách đến phân phối mũ và lấy mẫu sẵn (s1..s4) cho CRN."""
-
     def __init__(
         self,
         lp_id: int = LPID.CAR_SOURCE,
@@ -33,6 +32,7 @@ class CarSourceLP(BkSysLogicalProcess):
         self.next_car_id = 1
         self.total_generated = 0
         self.window_generated = 0
+        self._last_handled_time: float = -math.inf
 
     def initialize(self) -> None:
         if 0.0 < self.t_warmup <= self.t_end:
@@ -43,6 +43,12 @@ class CarSourceLP(BkSysLogicalProcess):
 
     def handle_event(self, event: Event) -> None:
         t = event.timestamp
+        if t < self._last_handled_time - 1e-12:
+            raise RuntimeError(
+                f"Vi phạm thời gian không giảm tại LP {self.lp_id} (CarSource): "
+                f"t={t:.6f} < last_t={self._last_handled_time:.6f} ({event.event_type})"
+            )
+        self._last_handled_time = t
         self.local_virt_time = t
 
         if event.event_type == EventType.WARMUP_END.value:
@@ -50,10 +56,7 @@ class CarSourceLP(BkSysLogicalProcess):
             return
 
         if event.event_type == EventType.GENERATE.value:
-            s_map = {
-                k: self.rng.sample_service(k, m)
-                for k, m in self.mean_services.items()
-            }
+            s_map = {k: self.rng.sample_service(k, m) for k, m in self.mean_services.items()}
             car = CarRecord(car_id=self.next_car_id, t_arrive=t, service_times=s_map)
             self.next_car_id += 1
             self.total_generated += 1

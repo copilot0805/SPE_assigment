@@ -9,7 +9,7 @@ from drivethru.metrics.analytical import (
     analytical_mminf,
     analytical_mmnn,
 )
-from drivethru.metrics.statistics import check_littles_law
+from drivethru.metrics.stats_utils import check_littles_law
 from drivethru.models.car_source import CarSourceLP
 from drivethru.models.monitor import MonitorLP
 from drivethru.models.station import StationLP

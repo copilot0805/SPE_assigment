@@ -6,13 +6,6 @@ from drivethru.core.state import CarRecord, StationState
 
 
 class StationLP(BkSysLogicalProcess):
-    """
-    Lớp trạm hàng đợi tổng quát M/M/c/K dùng chung cho:
-    - Cả 6 mô hình hàng đợi đơn trong Thí nghiệm A (M/M/1, M/M/1/K, M/M/inf, M/M/n/n, M/M/c, M/M/c/K)
-    - Các trạm Order (LP1), Payment (LP2), Kitchen (LP3) và lớp cha của PickupLP (LP4)
-    - Hỗ trợ chế độ chặn (blocking_order=True) tại Order cho Thí nghiệm D.
-    """
-
     def __init__(
         self,
         lp_id: int,
@@ -40,6 +33,16 @@ class StationLP(BkSysLogicalProcess):
         self.blocking_order = blocking_order
         self.record_timestamps = record_timestamps
         self.event_timestamps: List[float] = []
+        self._last_handled_time: float = -math.inf
+        self.unmatched_food_ready_count: int = 0
+
+    def _guard_monotonic_time(self, t: float, event_type: str) -> None:
+        if t < self._last_handled_time - 1e-12:
+            raise RuntimeError(
+                f"Vi phạm thời gian không giảm tại LP {self.lp_id} (Station {self.station_idx}): "
+                f"t={t:.6f} < last_t={self._last_handled_time:.6f} ({event_type})"
+            )
+        self._last_handled_time = t
 
     def initialize(self) -> None:
         if 0.0 < self.t_warmup <= self.t_end:
@@ -57,6 +60,7 @@ class StationLP(BkSysLogicalProcess):
 
     def handle_event(self, event: Event) -> None:
         t = event.timestamp
+        self._guard_monotonic_time(t, event.event_type)
         self.local_virt_time = t
         if self.record_timestamps:
             self.event_timestamps.append(t)
@@ -129,7 +133,6 @@ class StationLP(BkSysLogicalProcess):
         for target_id, out_type in self.out_targets:
             payload = car.copy_for_branch() if out_type == EventType.ORDER_PLACED.value else car
             self.send_event(Event(t, self.lp_id, target_id, out_type, payload=payload))
-
         self._release_server_or_serve_next(t)
 
     def _handle_food_ready_at_order(self, kitchen_car: CarRecord, t: float) -> None:
@@ -137,13 +140,15 @@ class StationLP(BkSysLogicalProcess):
             return
         car = self.state.waiting_food_cars.pop(kitchen_car.car_id, None)
         if car is None:
-            return
-
+            self.unmatched_food_ready_count += 1
+            raise RuntimeError(
+                f"LP {self.lp_id} (Order) nhận FOOD_READY cho car_id={kitchen_car.car_id} "
+                f"nhưng không tìm thấy trong waiting_food_cars (count={self.unmatched_food_ready_count})!"
+            )
         self._record_completion_metrics(car, t)
         for target_id, out_type in self.out_targets:
             if out_type != EventType.ORDER_PLACED.value:
                 self.send_event(Event(t, self.lp_id, target_id, out_type, payload=car))
-
         self._release_server_or_serve_next(t)
 
     def _handle_warmup_end(self, t: float) -> None:
@@ -168,22 +173,15 @@ class StationLP(BkSysLogicalProcess):
     def get_statistics(self) -> Dict[str, Any]:
         self._update_integrals(self.t_end)
         tm = max(1e-9, self.t_end - self.t_warmup)
-
         avg_busy = self.state.area_busy / tm
-        if math.isinf(self.c):
-            u_val = avg_busy
-        else:
-            u_val = avg_busy / self.c
-
+        u_val = avg_busy if math.isinf(self.c) else (avg_busy / self.c)
         l_q = self.state.area_queue / tm
         l_sys = self.state.area_system / tm
         x_tput = self.state.served / tm
-
         w_q = self.state.sum_wq / self.state.served if self.state.served > 0 else 0.0
         w_sys = self.state.sum_w / self.state.served if self.state.served > 0 else 0.0
         p_b = self.state.dropped / self.state.arrived if self.state.arrived > 0 else 0.0
         p_w = self.state.waited_count / self.state.served if self.state.served > 0 else 0.0
-
         return {
             "station_idx": self.station_idx,
             "total_arrived": self.state.total_arrived,
@@ -193,13 +191,8 @@ class StationLP(BkSysLogicalProcess):
             "arrived": self.state.arrived,
             "served": self.state.served,
             "dropped": self.state.dropped,
-            "U": u_val,
-            "avg_busy": avg_busy,
-            "L_q": l_q,
-            "L": l_sys,
-            "W_q": w_q,
-            "W": w_sys,
-            "X": x_tput,
-            "P_b": p_b,
-            "P_w": p_w,
+            "U": u_val, "avg_busy": avg_busy,
+            "L_q": l_q, "L": l_sys,
+            "W_q": w_q, "W": w_sys,
+            "X": x_tput, "P_b": p_b, "P_w": p_w,
         }
