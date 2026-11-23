@@ -3,9 +3,13 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from drivethru.config.experiment_config import NetworkExpConfig, get_exp_bcd_configs
-from drivethru.experiments.runner import check_precision_criteria, run_batch_with_checkpoint
+from drivethru.experiments.runner import (
+    check_precision_details,
+    compute_config_fingerprint,
+    run_batch_with_checkpoint,
+)
 from drivethru.metrics.analytical import analytical_fork_join_network
-from drivethru.metrics.statistics import compute_ci95
+from drivethru.metrics.stats_utils import compute_ci95, evaluate_sla_status
 
 
 def summarize_config(cfg: NetworkExpConfig, rep_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -15,10 +19,12 @@ def summarize_config(cfg: NetworkExpConfig, rep_rows: List[Dict[str, Any]]) -> D
         "U1", "U2", "U3", "U4",
         "W1", "W2", "W3", "W4",
         "Wq1", "Wq2", "Wq3", "Wq4",
+        "L1", "L2", "L3", "L4",
     ]
-    prec_ok, t_hw_pct, pb_hw_abs = check_precision_criteria(rep_rows)
+    det = check_precision_details(rep_rows)
     row: Dict[str, Any] = {
         "config_id": cfg.config_id,
+        "config_hash": compute_config_fingerprint(cfg.params),
         "exp_tags": ";".join(cfg.exp_tags),
         "scenario": cfg.scenario_name,
         "lam": cfg.params.lam,
@@ -29,16 +35,22 @@ def summarize_config(cfg: NetworkExpConfig, rep_rows: List[Dict[str, Any]]) -> D
         "R": len(rep_rows),
         "flow_balance_all_ok": all(r["flow_balance_ok"] for r in rep_rows),
         "max_little_err_pct": max(r["little_err_sys"] for r in rep_rows) * 100.0,
-        "T_rel_hw_pct": t_hw_pct,
-        "Pb_hw_abs": pb_hw_abs,
-        "precision_ok": prec_ok,
+        "T_rel_hw_pct": det["t_rel_hw_pct"],
+        "Pb_hw_abs": det["pb_hw_abs"],
+        "worst_precision_metric": det["worst_rel_metric"],
+        "max_rel_hw_pct": det["worst_rel_hw_pct"],
+        "precision_ok": det["precision_ok"],
     }
+    ci_map: Dict[str, Dict[str, float]] = {}
     for m in metrics:
         ci = compute_ci95([r[m] for r in rep_rows])
+        ci_map[m] = ci
         row[f"{m}_mean"] = ci["mean"]
         row[f"{m}_hw"] = ci["half_width"]
 
-    row["sla_pass"] = (row["T_mean"] <= 8.0) and (row["P_b_mean"] <= 0.05)
+    sla_status = evaluate_sla_status(ci_map["T"], ci_map["P_b"], t_limit=8.0, pb_limit=0.05)
+    row["sla_status"] = sla_status
+    row["sla_pass"] = sla_status == "PASS"
     return row
 
 
@@ -67,15 +79,15 @@ def main(max_workers: int = 4) -> None:
     summaries = [summarize_config(cfg, all_reps[cfg.config_id]) for cfg in configs]
     summary_by_id = {s["config_id"]: s for s in summaries}
 
-    # --- 1. TỔNG HỢP THÍ NGHIỆM B (Baseline & Đối chiếu Fork-Join) ---
+    # --- 1. TỔNG HỢP THÍ NGHIỆM B ---
     exp_b_rows = [s for s in summaries if "ExpB_Base" in s["exp_tags"] or "ExpB_FJ" in s["exp_tags"]]
     write_summary_csv(reports_dir / "exp_b_summary.csv", exp_b_rows)
 
-    print("=" * 105)
+    print("=" * 108)
     print("KẾT QUẢ THÍ NGHIỆM B — ĐƯỜNG CƠ SỞ (c2=1, K1=8) & ĐỐI CHIẾU XẤP XỈ FORK-JOIN (K1=30)")
-    print("=" * 105)
+    print("=" * 108)
     print(f"{'Cấu hình':<20} | {'lam':<4} | {'T (Mean±CI95)':>17} | {'P95(T)':>7} | {'Pb (%)':>7} | {'U1':>5} | {'U2':>5} | {'U3':>5} | {'U4':>5} | {'Wf':>5}")
-    print("-" * 105)
+    print("-" * 108)
     for r in exp_b_rows:
         t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
         print(
@@ -84,7 +96,6 @@ def main(max_workers: int = 4) -> None:
             f"{r['U3_mean']:5.3f} | {r['U4_mean']:5.3f} | {r['W_f_mean']:5.3f}"
         )
 
-    # Đối chiếu sai số xấp xỉ Fork-Join và thu gọn Jackson tại K1=30
     for cid, key_approx, label in [
         ("B_FJ_K30_base", "T_approx", "Xấp xỉ Fork-Join (1/mu3=1.5)"),
         ("B_FJ_K30_deg", "T_jackson_no_kitchen", "Thu gọn Jackson (1/mu3=0.01)"),
@@ -97,33 +108,33 @@ def main(max_workers: int = 4) -> None:
         err = abs(r["T_mean"] - t_th) / t_th * 100.0
         print(f"  -> Đối chiếu {label}: Sim T = {r['T_mean']:.4f} vs Lý thuyết = {t_th:.4f} (Sai lệch = {err:.2f}% | {'PASS' if err < 5.0 else 'CHECK'})")
 
-    # --- 2. TỔNG HỢP THÍ NGHIỆM C (48 cấu hình & Chọn cấu hình tối ưu tại Peak lam=0.6) ---
+    # --- 2. TỔNG HỢP THÍ NGHIỆM C (3 trạng thái SLA: PASS / FAIL / BOUNDARY) ---
     exp_c_rows = [s for s in summaries if "ExpC" in s["exp_tags"]]
     write_summary_csv(reports_dir / "exp_c_summary.csv", exp_c_rows)
 
-    print("\n" + "=" * 105)
+    print("\n" + "=" * 112)
     print("KẾT QUẢ THÍ NGHIỆM C — CẤU HÌNH ĐẠT SLA TẠI CAO ĐIỂM PEAK (lam=0.6: T <= 8.0 phút & Pb <= 5%)")
-    print("=" * 105)
+    print("=" * 112)
     peak_c = [r for r in exp_c_rows if abs(r["lam"] - 0.6) < 1e-9]
-    print(f"{'c2':<4} | {'K1':<4} | {'T (Mean±CI95)':>17} | {'P95(T)':>7} | {'P(T>8)':>7} | {'Pb (%)':>14} | {'U2':>6} | {'SLA':<5}")
-    print("-" * 105)
+    print(f"{'c2':<4} | {'K1':<4} | {'R':<3} | {'T (Mean±CI95)':>17} | {'P95(T)':>7} | {'P(T>8)':>7} | {'Pb (%)':>14} | {'U2':>6} | {'SLA':<8}")
+    print("-" * 112)
     for r in peak_c:
         t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
         pb_str = f"{r['P_b_mean']*100:5.2f} ± {r['P_b_hw']*100:4.2f}%"
         print(
-            f"{r['c2']:<4} | {r['K1']:<4} | {t_str:>17} | {r['P95_T_mean']:7.3f} | "
-            f"{r['P_T_gt_8_mean']*100:6.2f}% | {pb_str:>14} | {r['U2_mean']:6.3f} | {'PASS' if r['sla_pass'] else 'FAIL':<5}"
+            f"{r['c2']:<4} | {r['K1']:<4} | {r['R']:<3} | {t_str:>17} | {r['P95_T_mean']:7.3f} | "
+            f"{r['P_T_gt_8_mean']*100:6.2f}% | {pb_str:>14} | {r['U2_mean']:6.3f} | {r['sla_status']:<8}"
         )
 
-    # --- 3. TỔNG HỢP THÍ NGHIỆM D (Non-blocking vs Blocking tại c2=2, K1=8) ---
+    # --- 3. TỔNG HỢP THÍ NGHIỆM D ---
     exp_d_rows = [s for s in summaries if "ExpD_NB" in s["exp_tags"] or "ExpD_BLK" in s["exp_tags"]]
     write_summary_csv(reports_dir / "exp_d_summary.csv", exp_d_rows)
 
-    print("\n" + "=" * 105)
+    print("\n" + "=" * 108)
     print("KẾT QUẢ THÍ NGHIỆM D — SO SÁNH KHÔNG CHẶN (NON-BLOCKING) vs CHẶN (BLOCKING) TẠI c2=2, K1=8")
-    print("=" * 105)
+    print("=" * 108)
     print(f"{'lam':<5} | {'Biến thể':<14} | {'T (Mean±CI95)':>17} | {'Pb (%)':>14} | {'U1':>14} | {'Wf (phút)':>10}")
-    print("-" * 105)
+    print("-" * 108)
     for lam in (0.4, 0.6, 0.7):
         nb = summary_by_id[f"C_lam{int(round(lam * 10))}_c2_2_K1_8"]
         blk = summary_by_id[f"D_BLK_lam{int(round(lam * 10))}_c2_2_K1_8"]
@@ -132,10 +143,10 @@ def main(max_workers: int = 4) -> None:
             pb_str = f"{r['P_b_mean']*100:5.2f} ± {r['P_b_hw']*100:4.2f}%"
             u1_str = f"{r['U1_mean']:6.3f} ± {r['U1_hw']:5.3f}"
             print(f"{lam:<5.1f} | {label:<14} | {t_str:>17} | {pb_str:>14} | {u1_str:>14} | {r['W_f_mean']:10.4f}")
-        print("-" * 105)
+        print("-" * 108)
 
     all_prec_ok = all(s["precision_ok"] for s in summaries)
-    print(f"\n[M4 Summary] Đã xuất 3 bảng CSV tại reports/ | Toàn bộ {len(summaries)} cấu hình đạt CI95%: {all_prec_ok}")
+    print(f"\n[M4 Summary] Đã xuất 3 bảng CSV tại reports/ | Toàn bộ {len(summaries)} cấu hình đạt CI95% (U,L,W,T,Pb): {all_prec_ok}")
 
 
 if __name__ == "__main__":
