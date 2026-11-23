@@ -2,7 +2,9 @@
 
 from bkitevsim.core import Event, Simulation, SimulationOptions
 from drivethru.config.simulation_config import DriveThruParams, safe_bucket_width
-from drivethru.engines.base import compute_fidelity_error
+from drivethru.core.state import CarRecord
+from drivethru.engines.base import compare_car_traces, compute_fidelity_error
+from drivethru.engines.coroutine_engine import CoStationLP
 from drivethru.engines.coroutine_engine import run_coroutine_engine
 from drivethru.engines.multithread_engine import run_multithread_engine
 from drivethru.engines.safe_co_base import SafeCoLogicalProcess, check_and_raise_errors
@@ -106,6 +108,27 @@ class TestM5EnginesGate(unittest.TestCase):
         for eng in (co_rev, mt_rev):
             fid = compute_fidelity_error(eng.to_dict(), seq_ref.to_dict(), tol=1e-9)
             self.assertTrue(fid["passed"], f"Reverse fork mismatch ({eng.engine_name}): {fid}")
+
+
+
+    def test_6_per_car_trace_fidelity_and_costation_inherits_fail_fast(self):
+        """(a) So khớp quỹ đạo TỪNG XE giữa 3 engine (<1e-9); (b) CoStationLP thừa hưởng fail-fast từ StationLP."""
+        params = DriveThruParams(lam=0.6, c2=2, K1=4, t_warmup=200.0, t_end=1000.0, blocking_order=False)
+        seq = run_sequential_engine(params, seed=4, measure_memory=False, record_trace=True)
+        co = run_coroutine_engine(params, seed=4, measure_memory=False, record_trace=True)
+        mt = run_multithread_engine(params, seed=4, measure_memory=False, record_trace=True)
+
+        for eng in (co, mt):
+            cmp_res = compare_car_traces(eng.car_trace, seq.car_trace, tol=1e-9)
+            self.assertTrue(cmp_res["passed"], f"Car-by-car mismatch ({eng.engine_name}): {cmp_res}")
+            self.assertGreater(cmp_res["cars_checked"], 400)
+
+        # Kiểm chứng CoStationLP dùng Composition -> tự thừa hưởng fail-fast unmatched FOOD_READY
+        sink = []
+        co_ord = CoStationLP(lp_id=1, station_idx=1, c=2, K=6, blocking_order=True, t_warmup=0.0, t_end=100.0, error_sink=sink)
+        with self.assertRaises(RuntimeError):
+            co_ord.handle_event(Event(5.0, 3, 1, "FOOD_READY", payload=CarRecord(car_id=999, t_arrive=1.0)))
+        self.assertEqual(len(sink), 1)
 
 
 if __name__ == "__main__":
