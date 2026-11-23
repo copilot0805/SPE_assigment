@@ -42,7 +42,7 @@ WARMUP_SEED = 999
 RAW_TIMING_FIELDS = [
     "scenario_id", "engine_name", "lam", "t_end", "seed", "events_processed",
     "wall_time", "cpu_time", "cpu_wall_ratio", "events_per_sec",
-    "rss_mb", "avg_active_lps_per_epoch", "pct_single_lp_epochs",
+    "avg_active_lps_per_epoch", "pct_single_lp_epochs",
     "T", "P_b", "U1", "U2", "U3", "U4", "W_f", "X", "P95_T", "L_system",
     "flow_balance_ok", "little_err_sys", "causality_violations", "deadlocked",
     "max_fidelity_err", "fidelity_passed", "max_car_trace_err", "car_trace_passed",
@@ -50,7 +50,7 @@ RAW_TIMING_FIELDS = [
 
 RAW_MEM_FIELDS = [
     "scenario_id", "engine_name", "lam", "t_end", "seed",
-    "events_processed", "peak_mem_mb", "rss_mb", "delta_rss_mb",
+    "events_processed", "peak_mem_mb",
 ]
 
 SUMMARY_FIELDS = [
@@ -58,7 +58,7 @@ SUMMARY_FIELDS = [
     "wall_time_mean", "wall_time_std", "wall_time_ci95", "slowdown_vs_seq",
     "events_per_sec_mean", "events_per_sec_ci95",
     "cpu_time_mean", "cpu_time_ci95", "cpu_wall_ratio_mean",
-    "peak_mem_mb_mean", "peak_mem_mb_ci95", "rss_mb_mean", "rss_mb_ci95",
+    "peak_mem_mb_mean", "peak_mem_mb_ci95",
     "avg_active_lps_mean", "pct_single_lp_epochs_mean",
     "max_fidelity_err", "max_car_trace_err", "fidelity_pass_rate_pct",
     "causality_error_rate_pct", "deadlock_rate_pct",
@@ -96,7 +96,7 @@ def run_m5_benchmark() -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
     print("=" * 102)
-    print("M5 BENCHMARK (1-CORE SEQUENTIAL PROCESS — ĐA MỨC t_end & ĐA MỨC λ, OS RSS & CAR-BY-CAR TRACE)")
+    print("M5 BENCHMARK (1-CORE SEQUENTIAL PROCESS — ĐA MỨC t_end & ĐA MỨC λ, PYTHON HEAP & CAR-BY-CAR TRACE)")
     print(f"Python: {platform.python_version()} | OS: {platform.platform()}")
     print(f"Scenarios: {len(SCENARIOS)} kịch bản x 3 engines x R={len(SEEDS)} seeds (c2=2, K1=6, t_warmup={T_WARMUP:.0f})")
     print("=" * 102)
@@ -172,7 +172,6 @@ def run_m5_benchmark() -> None:
                     "cpu_time": res.cpu_time,
                     "cpu_wall_ratio": res.cpu_wall_ratio,
                     "events_per_sec": res.events_per_sec,
-                    "rss_mb": res.rss_mb,
                     "avg_active_lps_per_epoch": res.avg_active_lps_per_epoch,
                     "pct_single_lp_epochs": res.pct_single_lp_epochs,
                     "T": res.T, "P_b": res.P_b,
@@ -190,7 +189,7 @@ def run_m5_benchmark() -> None:
                 _append_row(RAW_TIMING_CSV, RAW_TIMING_FIELDS, row)
                 done_timing.add((sc_id, engine_name, seed))
 
-    # ---- PHA 2: MEMORY PROFILING (tracemalloc Heap + OS RSS) ----
+    # ---- PHA 2: MEMORY PROFILING (tracemalloc Python Heap) ----
     existing_mem = _load_existing_rows(RAW_MEM_CSV, "scenario_id")
     if not existing_mem and RAW_MEM_CSV.exists():
         RAW_MEM_CSV.unlink()
@@ -198,7 +197,7 @@ def run_m5_benchmark() -> None:
         (r["scenario_id"], r["engine_name"], int(r["seed"])) for r in existing_mem
     }
 
-    print(f"\n[PHA 2] MEMORY PROFILING RUN (tracemalloc Heap + OS RSS, seeds={MEM_SEEDS})")
+    print(f"\n[PHA 2] MEMORY PROFILING RUN (tracemalloc Python Heap, seeds={MEM_SEEDS})")
     for sc_id, lam, t_end in SCENARIOS:
         params = _make_params(lam, t_end)
         for engine_name in ENGINE_ORDER:
@@ -217,9 +216,7 @@ def run_m5_benchmark() -> None:
                         "seed": seed,
                         "events_processed": res.events_processed,
                         "peak_mem_mb": res.peak_mem_mb,
-                        "rss_mb": res.rss_mb,
-                        "delta_rss_mb": res.delta_rss_mb,
-                    },
+                        },
                 )
                 done_mem.add((sc_id, engine_name, seed))
 
@@ -236,7 +233,7 @@ def run_m5_benchmark() -> None:
     print("\n" + "=" * 128)
     print(
         f"{'Scenario':<19} | {'Engine':<11} | {'Events':>7} | {'Wall (s) ± CI95':>18} | {'Slow':>6} | "
-        f"{'Thr(ev/s)':>10} | {'CPU/W':>5} | {'HeapMB':>6} | {'RSS MB':>6} | {'1LP%':>5} | {'ActLP':>5} | {'CarErr':>7}"
+        f"{'Thr(ev/s)':>10} | {'CPU/W':>5} | {'HeapMB':>6} | {'1LP%':>5} | {'ActLP':>5} | {'CarErr':>7}"
     )
     print("-" * 128)
 
@@ -250,7 +247,6 @@ def run_m5_benchmark() -> None:
             ci_cpu = compute_ci95([float(r["cpu_time"]) for r in t_rows])
             ci_ratio = compute_ci95([float(r["cpu_wall_ratio"]) for r in t_rows])
             ci_mem = compute_ci95([float(r["peak_mem_mb"]) for r in m_rows])
-            ci_rss = compute_ci95([float(r["rss_mb"]) for r in m_rows])
             ev_mean = sum(float(r["events_processed"]) for r in t_rows) / len(t_rows)
             avg_act = sum(float(r["avg_active_lps_per_epoch"]) for r in t_rows) / len(t_rows)
             pct_1lp = sum(float(r["pct_single_lp_epochs"]) for r in t_rows) / len(t_rows)
@@ -279,8 +275,6 @@ def run_m5_benchmark() -> None:
                 "cpu_wall_ratio_mean": ci_ratio["mean"],
                 "peak_mem_mb_mean": ci_mem["mean"],
                 "peak_mem_mb_ci95": ci_mem["half_width"],
-                "rss_mb_mean": ci_rss["mean"],
-                "rss_mb_ci95": ci_rss["half_width"],
                 "avg_active_lps_mean": avg_act,
                 "pct_single_lp_epochs_mean": pct_1lp,
                 "max_fidelity_err": max_fid,
@@ -294,7 +288,7 @@ def run_m5_benchmark() -> None:
                 f"{sc_id:<19} | {engine_name:<11} | {ev_mean:7.0f} | "
                 f"{ci_wall['mean']:7.4f} ± {ci_wall['half_width']:7.4f} | {slowdown:5.2f}x | "
                 f"{ci_thr['mean']:10,.0f} | {ci_ratio['mean']:5.2f} | {ci_mem['mean']:6.3f} | "
-                f"{ci_rss['mean']:6.2f} | {pct_1lp:5.1f} | {avg_act:5.2f} | {max_car:7.1e}"
+                f"{pct_1lp:5.1f} | {avg_act:5.2f} | {max_car:7.1e}"
             )
     print("=" * 128)
 

@@ -1,4 +1,5 @@
 ﻿import csv
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -64,6 +65,45 @@ def write_summary_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
+def sync_exp_d_crn_pairs(
+    configs: List[NetworkExpConfig],
+    all_reps: Dict[str, List[Dict[str, Any]]],
+    raw_csv: Path,
+    max_workers: int,
+) -> None:
+    """
+    Thực hiện đúng Mục 2.5 Thiết kế V2: khi so sánh các cấu hình bằng CRN (Exp D),
+    cả biến thể không chặn và có chặn dùng chung tập seed 1..R lớn nhất của cặp đó.
+    """
+    cfg_by_id = {c.config_id: c for c in configs}
+    sync_targets: List[NetworkExpConfig] = []
+
+    for lam in (0.4, 0.6, 0.7):
+        k = int(round(lam * 10))
+        nb_id = f"C_lam{k}_c2_2_K1_8"
+        blk_id = f"D_BLK_lam{k}_c2_2_K1_8"
+        r_nb = len(all_reps[nb_id])
+        r_blk = len(all_reps[blk_id])
+        max_r = max(r_nb, r_blk)
+        if r_nb < max_r:
+            sync_targets.append(replace(cfg_by_id[nb_id], base_replications=max_r, max_replications=max_r))
+        if r_blk < max_r:
+            sync_targets.append(replace(cfg_by_id[blk_id], base_replications=max_r, max_replications=max_r))
+
+    if sync_targets:
+        print(
+            "[Exp D CRN Sync] Đồng bộ tập seed chung 1..R lớn nhất theo §2.5 cho: "
+            + ", ".join(f"{c.config_id}(->R={c.base_replications})" for c in sync_targets)
+        )
+        synced = run_batch_with_checkpoint(
+            configs=sync_targets,
+            raw_csv_path=raw_csv,
+            max_workers=max_workers,
+            auto_expand_ci=False,
+        )
+        all_reps.update(synced)
+
+
 def main(max_workers: int = 4) -> None:
     reports_dir = Path("reports")
     raw_csv = reports_dir / "exp_bcd_raw_runs.csv"
@@ -75,6 +115,9 @@ def main(max_workers: int = 4) -> None:
         max_workers=max_workers,
         auto_expand_ci=True,
     )
+
+    # Đồng bộ CRN cho Exp D trước khi tổng hợp summary CSV
+    sync_exp_d_crn_pairs(configs, all_reps, raw_csv, max_workers=max_workers)
 
     summaries = [summarize_config(cfg, all_reps[cfg.config_id]) for cfg in configs]
     summary_by_id = {s["config_id"]: s for s in summaries}
@@ -108,7 +151,7 @@ def main(max_workers: int = 4) -> None:
         err = abs(r["T_mean"] - t_th) / t_th * 100.0
         print(f"  -> Đối chiếu {label}: Sim T = {r['T_mean']:.4f} vs Lý thuyết = {t_th:.4f} (Sai lệch = {err:.2f}% | {'PASS' if err < 5.0 else 'CHECK'})")
 
-    # --- 2. TỔNG HỢP THÍ NGHIỆM C (3 trạng thái SLA: PASS / FAIL / BOUNDARY) ---
+    # --- 2. TỔNG HỢP THÍ NGHIỆM C ---
     exp_c_rows = [s for s in summaries if "ExpC" in s["exp_tags"]]
     write_summary_csv(reports_dir / "exp_c_summary.csv", exp_c_rows)
 
@@ -130,11 +173,11 @@ def main(max_workers: int = 4) -> None:
     exp_d_rows = [s for s in summaries if "ExpD_NB" in s["exp_tags"] or "ExpD_BLK" in s["exp_tags"]]
     write_summary_csv(reports_dir / "exp_d_summary.csv", exp_d_rows)
 
-    print("\n" + "=" * 108)
+    print("\n" + "=" * 112)
     print("KẾT QUẢ THÍ NGHIỆM D — SO SÁNH KHÔNG CHẶN (NON-BLOCKING) vs CHẶN (BLOCKING) TẠI c2=2, K1=8")
-    print("=" * 108)
-    print(f"{'lam':<5} | {'Biến thể':<14} | {'T (Mean±CI95)':>17} | {'Pb (%)':>14} | {'U1':>14} | {'Wf (phút)':>10}")
-    print("-" * 108)
+    print("=" * 112)
+    print(f"{'lam':<5} | {'Biến thể':<14} | {'R':<3} | {'T (Mean±CI95)':>17} | {'Pb (%)':>14} | {'U1':>14} | {'Wf (phút)':>10}")
+    print("-" * 112)
     for lam in (0.4, 0.6, 0.7):
         nb = summary_by_id[f"C_lam{int(round(lam * 10))}_c2_2_K1_8"]
         blk = summary_by_id[f"D_BLK_lam{int(round(lam * 10))}_c2_2_K1_8"]
@@ -142,8 +185,8 @@ def main(max_workers: int = 4) -> None:
             t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
             pb_str = f"{r['P_b_mean']*100:5.2f} ± {r['P_b_hw']*100:4.2f}%"
             u1_str = f"{r['U1_mean']:6.3f} ± {r['U1_hw']:5.3f}"
-            print(f"{lam:<5.1f} | {label:<14} | {t_str:>17} | {pb_str:>14} | {u1_str:>14} | {r['W_f_mean']:10.4f}")
-        print("-" * 108)
+            print(f"{lam:<5.1f} | {label:<14} | {r['R']:<3} | {t_str:>17} | {pb_str:>14} | {u1_str:>14} | {r['W_f_mean']:10.4f}")
+        print("-" * 112)
 
     all_prec_ok = all(s["precision_ok"] for s in summaries)
     print(f"\n[M4 Summary] Đã xuất 3 bảng CSV tại reports/ | Toàn bộ {len(summaries)} cấu hình đạt CI95% (U,L,W,T,Pb): {all_prec_ok}")

@@ -49,9 +49,10 @@ def plot_fig1_e2e_time(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
     axes[1].grid(True, linestyle="--", alpha=0.5)
     axes[1].legend()
 
-    plt.suptitle("Biểu đồ 1: Thời gian end-to-end T và P95(T) theo λ và số cửa Payment c2 (95% CI)", fontweight="bold")
+    plt.suptitle("T và P95(T) theo λ và c2", fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(out_dir / "fig1_e2e_time_by_lambda_c2.png", dpi=180)
+    plt.savefig(out_dir / "fig1_e2e_time_by_lambda_c2.pdf")
     plt.close(fig)
 
 
@@ -71,7 +72,7 @@ def plot_fig2_blocking_prob(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
         ax.errorbar(xs, ys, yerr=yerr, marker="o", capsize=4, linewidth=2, color=col, label=label)
 
     ax.axhline(5.0, color="black", linestyle="--", linewidth=1.4, label="Ngưỡng SLA (P_b = 5%)")
-    ax.set_title("Biểu đồ 2: Xác suất từ chối P_b (%) theo sức chứa làn Order K1 (95% CI)", fontweight="bold")
+    ax.set_title("Xác suất từ chối P_b theo K1", fontweight="bold")
     ax.set_xlabel("Sức chứa tối đa trạm Order K1 (xe)")
     ax.set_ylabel("Xác suất từ chối P_b (%)")
     ax.set_xticks(k1_vals)
@@ -79,6 +80,7 @@ def plot_fig2_blocking_prob(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
     ax.legend()
     plt.tight_layout()
     plt.savefig(out_dir / "fig2_blocking_prob_by_K1.png", dpi=180)
+    plt.savefig(out_dir / "fig2_blocking_prob_by_K1.pdf")
     plt.close(fig)
 
 
@@ -110,9 +112,10 @@ def plot_fig3_utilization(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
         ax.legend()
 
     axes[0].set_ylabel("Độ sử dụng tài nguyên Utilization (%)")
-    plt.suptitle("Biểu đồ 3: Độ sử dụng U_i của bốn trạm theo λ nhằm xác định nút cổ chai (95% CI)", fontweight="bold")
+    plt.suptitle("Độ sử dụng U_i theo λ", fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(out_dir / "fig3_utilization_bottleneck.png", dpi=180)
+    plt.savefig(out_dir / "fig3_utilization_bottleneck.pdf")
     plt.close(fig)
 
 
@@ -151,9 +154,10 @@ def plot_fig4_exp_a(exp_a_path: Path, out_dir: Path) -> None:
         ax.grid(axis="y", linestyle="--", alpha=0.5)
         ax.legend(fontsize=8)
 
-    plt.suptitle("Biểu đồ 4: So sánh Lý thuyết Giải tích và Mô phỏng cho 6 mô hình đơn (Exp A, R=30)", fontweight="bold")
+    plt.suptitle("Lý thuyết và mô phỏng — Exp A", fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(out_dir / "fig4_exp_a_validation.png", dpi=180)
+    plt.savefig(out_dir / "fig4_exp_a_validation.pdf")
     plt.close(fig)
 
 
@@ -188,9 +192,10 @@ def plot_fig5_exp_d(exp_d: List[Dict[str, str]], out_dir: Path) -> None:
         ax.grid(axis="y", linestyle="--", alpha=0.5)
         ax.legend(fontsize=8.5)
 
-    plt.suptitle("Biểu đồ 5: So sánh Giao tiếp Không chặn vs. Có chặn giữa Order và Kitchen (Exp D, c2=2, K1=8)", fontweight="bold")
+    plt.suptitle("Không chặn và có chặn — Exp D", fontweight="bold")
     plt.tight_layout(rect=[0, 0, 1, 0.93])
     plt.savefig(out_dir / "fig5_exp_d_blocking_vs_nonblocking.png", dpi=180)
+    plt.savefig(out_dir / "fig5_exp_d_blocking_vs_nonblocking.pdf")
     plt.close(fig)
 
 

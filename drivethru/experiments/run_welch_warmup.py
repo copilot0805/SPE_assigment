@@ -137,12 +137,13 @@ def run_welch_study(
         writer.writerows(csv_rows)
 
     fig.suptitle(
-        f"Kiểm chứng độ đủ Warm-up bằng Phương pháp Welch (R={num_replications} seeds, Δt={int(bin_width)}p, w={window_w}, bỏ w bin mép phải)",
+        "Kiểm tra warm-up bằng phương pháp Welch",
         fontweight="bold", fontsize=11.5,
     )
     plt.tight_layout(rect=[0, 0, 1, 0.94])
     out_png = reports_dir / "fig0_welch_warmup.png"
     plt.savefig(out_png, dpi=200)
+    plt.savefig(out_png.with_suffix(".pdf"))
     plt.close(fig)
     print(f"[OK] Đã xuất dữ liệu & biểu đồ Welch: {out_csv}, {out_png}")
 

@@ -1,15 +1,15 @@
 # Hướng dẫn Kiểm định & Chấm chéo dành cho Examiner (CO3007 — Nhóm SPE-L0x-008)
 
-Tài liệu cập nhật cho phiên bản hợp nhất hoàn chỉnh (**M1–M4 cốt lõi + Mở rộng M5**), bảo đảm `bkitevsim/` gốc của giảng viên giữ nguyên vẹn byte-by-byte.
+Tài liệu cập nhật cho phiên bản hợp nhất hoàn chỉnh (**M1–M4 cốt lõi + Mở rộng M5**), đo trên môi trường **Windows 11, CPU 4-core/8-thread, CPython 3.12.10**, bảo đảm `bkitevsim/` gốc của giảng viên giữ nguyên vẹn byte-by-byte.
 
 ---
 
 ## 1. Tổng quan Trạng thái Hiện thực
-* **Bộ kiểm thử tự động:** **26/26 unit tests PASS** (`test_m1_framework.py`: 3, `test_m2_station_gate.py`: 2, `test_m3_network_gate.py`: 7, `test_m4_review_guards.py`: 8, `test_m5_engines_gate.py`: 6).
+* **Bộ kiểm thử tự động:** **29/29 unit tests PASS** (`test_m1_framework.py`: 3, `test_m2_station_gate.py`: 2, `test_m3_network_gate.py`: 7, `test_m4_review_guards.py`: 11, `test_m5_engines_gate.py`: 6).
 * **Tài liệu đi kèm:**
   * `USER_MANUAL.md`: Hướng dẫn cài đặt, chạy từng lệnh và tra cứu đầu ra.
   * `docs/PHASE2_ARCHITECTURE_AND_ERRATA.md`: Sơ đồ kiến trúc, sơ đồ lớp, tóm tắt workload/thí nghiệm và bảng đính chính Bảng 7 (`safe_bucket_width`).
-  * `ROADMAP_M5_MULTITHREAD.md`: Phân tích 10 bước PE cho 3 kiến trúc DES (kèm giới hạn zero-lookahead ~82% epoch 1-LP, OS RSS và car-by-car fidelity).
+  * `ROADMAP_M5_MULTITHREAD.md`: Phân tích 10 bước PE cho 3 kiến trúc DES (mô hình lai Coroutine, giới hạn zero-lookahead ~82% nhịp 1 LP, thí nghiệm đối chứng tăng tốc OS-thread `fig8` và car-by-car fidelity).
 
 ---
 
@@ -29,7 +29,7 @@ Tài liệu cập nhật cho phiên bản hợp nhất hoàn chỉnh (**M1–M4 
 # 1. Xác nhận bkitevsim/ không bị sửa đổi
 git diff --stat main -- bkitevsim/
 
-# 2. Chạy toàn bộ 26 unit tests (M1-M5)
+# 2. Chạy toàn bộ 29 unit tests (M1-M5)
 python -m unittest discover -s tests -p "test_m*.py" -v
 
 # 3. Tái lập các thí nghiệm chính (nên xóa reports/ trước khi chạy mới)
@@ -39,8 +39,9 @@ python -m drivethru.experiments.run_exp_a
 python -m drivethru.experiments.run_exp_bcd
 python -m drivethru.experiments.plot_results
 
-# 4. (Tùy chọn) Tái lập mở rộng M5 (1-core, đa mức t_end & lambda, OS RSS)
+# 4. (Tùy chọn) Tái lập mở rộng M5 & thí nghiệm đối chứng tăng tốc OS-thread
 python -m drivethru.experiments.run_m5_benchmark
+python -m drivethru.experiments.run_m5_speedup_probe
 python -m drivethru.experiments.plot_m5_benchmark
 ```
 
