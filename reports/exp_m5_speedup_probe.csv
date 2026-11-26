@@ -1,0 +1,10 @@
+regime_id,regime_label,engine_name,n_reps,events_processed,wall_time_mean,wall_time_ci95,speedup_vs_seq,cpu_wall_ratio_mean,avg_active_lps,pct_single_lp_epochs,checksum_match
+R1_zero_lookahead_light,Zero-Lookahead (1 LP/nhịp) + Python nhẹ,sequential,5,12000,0.18964903999585658,0.061431104003688765,1.0,1.012958797510025,1.0,100.0,1
+R1_zero_lookahead_light,Zero-Lookahead (1 LP/nhịp) + Python nhẹ,coroutine,5,12000,1.0844185400055721,0.20101072977597764,0.1748854644212207,0.9763048692232414,1.0,100.0,1
+R1_zero_lookahead_light,Zero-Lookahead (1 LP/nhịp) + Python nhẹ,multithread,5,12000,1.361115979999886,0.130150576065377,0.13933349015259705,0.9769006459261563,1.0,100.0,1
+R2_pos_lookahead_py_gil,Lookahead dương (6 LP/nhịp) + Python nặng (GIL),sequential,5,180,1.7417236800014506,0.6719467252356544,1.0,0.9501094662770487,1.0,100.0,1
+R2_pos_lookahead_py_gil,Lookahead dương (6 LP/nhịp) + Python nặng (GIL),coroutine,5,180,1.2020245199964847,0.24177324396526073,1.4489918059296696,0.981072690415702,1.0,100.0,1
+R2_pos_lookahead_py_gil,Lookahead dương (6 LP/nhịp) + Python nặng (GIL),multithread,5,180,1.323392319996492,0.3894902808971141,1.3161053254457964,0.9868397226162233,6.0,0.0,1
+R3_pos_lookahead_nogil_c,Lookahead dương (6 LP/nhịp) + C/OpenSSL (No-GIL),sequential,5,180,6.294508939996012,1.0640671510095416,1.0,0.9774086392567176,1.0,100.0,1
+R3_pos_lookahead_nogil_c,Lookahead dương (6 LP/nhịp) + C/OpenSSL (No-GIL),coroutine,5,180,6.164163960001315,0.4447806882338681,1.0211456056069392,0.9830132143559936,1.0,100.0,1
+R3_pos_lookahead_nogil_c,Lookahead dương (6 LP/nhịp) + C/OpenSSL (No-GIL),multithread,5,180,2.1419572799961317,0.12386180912482778,2.9386715593167105,5.271131584497547,6.0,0.0,1

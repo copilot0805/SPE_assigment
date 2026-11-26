@@ -1,0 +1,38 @@
+flowchart LR
+    subgraph Infra["Infrastructure Layer (bkitevsim/ — giữ nguyên byte-by-byte)"]
+        SO["SimulationOptions<br/>(end_time, bucket_width=safe_bucket_width)"]
+        SIM["Simulation"]
+        DISP["Dispatchers<br/>SequentialEventDispatcher<br/>DistributedEventDispatcher<br/>BkSysCoEventLoop (M5)"]
+        LQ["LadderQueue<br/>(1024 buckets)"]
+        SO --> SIM --> DISP <--> LQ
+    end
+
+    subgraph App["Application Layer (drivethru/models/ — 6 LPs từ 4 Classes)"]
+        LP0["LP0: CarSourceLP<br/>(MultiStreamRNG 5 dòng CRN)"]
+        LP1["LP1: StationLP (Order)<br/>M/M/c1/K1 + DROP + blocking_order"]
+        LP2["LP2: StationLP (Payment)<br/>M/M/c2"]
+        LP3["LP3: StationLP (Kitchen)<br/>M/M/c3"]
+        LP4["LP4: PickupLP(StationLP)<br/>M/M/c4 + Bảng Join đối xứng"]
+        LP5["LP5: MonitorLP<br/>Thống kê E2E + EventLog tùy chọn"]
+
+        LP0 -- "ARRIVAL" --> LP1
+        LP1 -- "TRANSFER" --> LP2
+        LP1 -- "ORDER_PLACED" --> LP3
+        LP1 -- "DROP (khi n >= K1)" --> LP5
+        LP2 -- "TRANSFER" --> LP4
+        LP3 -- "FOOD_READY" --> LP4
+        LP3 -. "Exp D" .-> LP1
+        LP4 -- "DEPARTURE" --> LP5
+    end
+
+    subgraph Exp["Experiments, Metrics & Verification (drivethru/experiments/, metrics/)"]
+        GUARD["Global Monotonic Guard<br/>+ Flow Conservation + Little <= 1%"]
+        RUN["runner.py (4 workers)<br/>Checkpoint config_hash + .bak<br/>CI95 (U,L,W,T,Pb) + SLA 3 mức"]
+        AN["analytical.py & stats_utils.py"]
+        PLOT["plot_results.py, analyze_step9.py, run_welch_warmup.py"]
+        RUN --> GUARD
+        RUN --> AN --> PLOT
+    end
+
+    DISP <--> App
+    App --> Exp

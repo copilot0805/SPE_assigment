@@ -1,6 +1,6 @@
 # Hồ sơ Kiến trúc, Đối chiếu Thiết kế & Đính chính (Phase 2)
 
-Tài liệu kỹ thuật bổ trợ cho báo cáo Phase 2 của nhóm **SPE-L0x-008** (CO3007 — Lớp L02), gồm: (1) Sơ đồ kiến trúc, (2) Sơ đồ lớp, (3) Bảng đối chiếu từng lời hứa trong `Assignment_SPE_Design_v2.pdf` với mã nguồn/kiểm thử, (4) Kiểm toán từng dòng tham số Bảng 5–7, và (5) Bảng đính chính (Errata) cùng danh mục bổ sung ngoài thiết kế.
+Tài liệu kỹ thuật bổ trợ cho báo cáo Phase 2 của nhóm **XX-08** (CO3007 — Lớp L02), gồm: (1) Sơ đồ kiến trúc, (2) Sơ đồ lớp, (3) Bảng đối chiếu từng lời hứa trong `Spe-Ass-Spec-XX-08.pdf` với mã nguồn/kiểm thử, (4) Kiểm toán từng dòng tham số Bảng 5–7, và (5) Bảng đính chính (Errata) cùng danh mục bổ sung ngoài thiết kế.
 
 ---
 
@@ -144,12 +144,12 @@ classDiagram
 |---|---|---|---|
 | **Mục 1.8** *(Bảng ánh xạ bắt buộc)* | Ánh xạ `Arrival event` $\to$ `CarSourceLP`, `Server` $\to$ `StationLP`/`PickupLP`, `sys_op` $\to$ dispatcher, `process_op` $\to$ `BEGIN_SERVICE`/`END_SERVICE`, `Processing event` $\to$ `MonitorLP` log. | `drivethru/models/` (`car_source.py`, `station.py`, `pickup.py`, `monitor.py` với `log_event()` + `record_event_log`); `drivethru/core/event_types.py`. | **Đạt** |
 | **Mục 1.9 (i)** | Cân bằng dòng khớp chính xác (chạy tự động mọi lượt Exp A–D). | `run_single.py` (`flow_balance_car`, `flow_balance_kitchen`), `run_exp_a.py`, `test_m2_station_gate.py`, `test_m3_network_gate.py::test_5`. | **Đạt** |
-| **Mục 1.9 (ii)** | Định luật Little lệch $\le 1\%$ (chạy tự động mọi lượt Exp A–D). | `stats_utils.py::check_littles_law()`, `run_single.py`, `run_exp_a.py`, `reports/exp_c_little_audit.csv` (53/53 trung bình cấu hình $\le 0.31\%$; lượt đơn lẻ tối đa $1.83\%$ đã kiểm toán ở §9.4). | **Đạt** *(có ghi hạn chế lượt đơn lẻ)* |
+| **Mục 1.9 (ii)** | Định luật Little lệch $\le 1\%$ (chạy tự động mọi lượt Exp A–D). | `stats_utils.py::check_littles_law()`, `run_single.py`, `run_exp_a.py`, `reports/exp_c_little_audit.csv` (53/53 trung bình cấu hình $\le 0.31\%$; lượt đơn lẻ tối đa $2.44\%$ ở trạm Payment và $1.83\%$ toàn hệ thống, 3/1 660 lượt vượt $1\%$; đã kiểm toán ở §9.4, Mục 5.3 báo cáo PDF). | **Đạt** *(có ghi hạn chế lượt đơn lẻ)* |
 | **Mục 1.9 (iii)** | Bảo toàn thông lượng $\lambda_{eff,2} = \lambda_{eff,3} = \lambda_{eff,4} = \lambda(1-P_b)$. | `tests/test_m3_network_gate.py::test_5`, cột `X1..X4` trong `reports/exp_bcd_raw_runs.csv`. | **Đạt** |
 | **Mục 1.9 (iv)** | Exp A: giá trị lý thuyết nằm trong $CI_{95}$ hoặc sai số tương đối $\le 5\%$, đạt tiêu chí độ chính xác §2.5. | `drivethru/experiments/run_exp_a.py`, `reports/exp_a_validation.csv` (**144/144 chỉ số PASS**). | **Đạt** |
 | **Mục 1.9 (v)** | Exp B với $K_1=30$: $\overline{T}$ mô phỏng lệch xấp xỉ Fork–Join $< 5\%$ (cả cơ sở lẫn thu gọn $1/\mu_3=0.01$). | `tests/test_m3_network_gate.py::test_6`, `reports/exp_b_summary.csv` (`B_FJ_K30_base`, `B_FJ_K30_deg`). | **Đạt** |
 | **Mục 1.9 (vi)** | Cùng seed cho cùng kết quả (bất biến đảo thứ tự event trễ 0) và hai loại dispatcher cho cùng chỉ số. | `tests/test_m3_network_gate.py::test_4` (tính bất biến cùng seed & đảo thứ tự fork trễ 0); `tests/test_m3_network_gate.py::test_7` (`SequentialEventDispatcher` vs. `DistributedEventDispatcher` khớp $< 10^{-10}$). | **Đạt** |
-| **Mục 1.9** *(Trace tay)* | Trace kiểm tay ~10 xe có ca bị từ chối (`DROP`) và ca chờ đồ ($W_f > 0$). | `drivethru/experiments/run_hand_trace.py`, `reports/hand_trace_10_cars.md` (13 xe, 3 DROP, 3 chờ đồ, 121 event), `test_m4_review_guards.py::test_8`. | **Đạt** |
+| **Mục 1.9** *(Trace kiểm tay)* | Trace kiểm tay ~10 xe có ca bị từ chối (`DROP`) và ca chờ đồ ($W_f > 0$). | `drivethru/experiments/run_hand_trace.py`, `reports/hand_trace_10_cars.md` (13 xe, 3 DROP, 3 chờ đồ, 121 event), `test_m4_review_guards.py::test_8`. | **Đạt** |
 | **Mục 2.5** *(Độ chính xác & CRN)* | Nửa độ rộng $CI_{95} \le 5\%$ cho `U, L, W, T` và $\le 0.3$ điểm % cho `P_b`; tự tăng `R` nếu chưa đạt; so sánh CRN dùng chung seed `1..R` lớn nhất của cặp. | `runner.py::check_precision_details()`, `run_exp_bcd.py::sync_exp_d_crn_pairs()`, `reports/exp_d_paired_crn.csv` (30 cặp ở $\lambda=0.4, 0.6$ và 40 cặp ở $\lambda=0.7$). | **Đạt** *(xem ghi chú §5.1)* |
 | **Mục 2.6** *(SLA)* | Xét đồng thời $\overline{T} \le 8.0$ phút và $P_b \le 5.0\%$; phân loại 3 mức `PASS` / `FAIL` / `BOUNDARY`, chạy thêm khi ở biên giới. | `stats_utils.py::evaluate_sla_status()`, `runner.py`, `run_exp_bcd.py` (cột `sla_status`), `test_m4_review_guards.py::test_2, test_7`. | **Đạt** |
 | **Bảng 12 — Exp A** | 6 mô hình đơn ($M/M/1, M/M/1/K, M/M/\infty, M/M/n/n, M/M/c, M/M/c/K$) qua `CarSourceLP -> StationLP -> MonitorLP`, 3 mức tải, $R=30$, $t_{end}=20\,000$ ($60\,000$ cho $M/M/1$ tải $0.9$). | `experiment_config.py::get_exp_a_configs()`, `run_exp_a.py`, `reports/exp_a_validation.csv`. | **Đạt** |
@@ -193,9 +193,9 @@ classDiagram
 
 ### 5.2. Các nội dung Bổ sung / Mở rộng ngoài lời hứa ban đầu (không thay đổi yêu cầu lõi)
 * **Kiểm chứng Warm-up bằng phương pháp Welch (`run_welch_warmup.py`, `fig0`):** Thực hiện lời hẹn ở Bảng 4 §2.5 và Bảng 7 §3.1.2 ($R = 60$, bỏ $w = 5$ bin mép phải).
-* **Phân bổ phương sai có `SSE` (`analyze_step9.py`, `exp_c_sensitivity_anova.csv`, `fig10`):** Bổ sung theo bài giảng `pe9`–`pe10` trên 1 440 lượt chạy Exp C (30 seed đầu của 48 cấu hình).
+* **Phân bổ phương sai có `SSE` (`analyze_step9.py`, `exp_c_sensitivity_anova.csv`, `fig10`):** Bổ sung ở Bước 9 (phân tích dữ liệu) trên 1 440 lượt chạy Exp C (30 seed đầu của 48 cấu hình).
 * **Đồ thị đánh đổi Pareto $\overline{T}$–$P_b$ & Bảng cấu hình tối thiểu theo $\lambda$ (`fig9`, `exp_c_min_sla_configs.csv`):** Làm rõ tính ngược chiều giữa $\overline{T}$ và $P_b$ ở §2.6.
 * **So sánh ghép cặp CRN (`exp_d_paired_crn.csv`):** Tính $CI_{95\%}$ cho hiệu từng cặp $\Delta_r$ ở Exp D (30 cặp ở $\lambda=0.4, 0.6$ và 40 cặp ở $\lambda=0.7$).
 * **Kiểm toán Định luật Little (`exp_c_little_audit.csv`):** Định lượng sai số trung bình cấu hình vs. lượt đơn lẻ theo §2.4.7.
-* **3 kiểm thử Verification bổ sung (`test_m4_review_guards.py::test_9..11`):** Phủ trọn 9 kỹ thuật của `pe7` (Deterministic, Continuity, Seed Independence).
-* **Phần mở rộng tùy chọn M5 (`drivethru/engines/`, `fig6`–`fig8`):** So sánh 3 kiến trúc thực thi DES (`sequential_engine.py`, mô hình lai `coroutine_engine.py` bọc Composition + `BkSysFuture`, `multithread_engine.py` 6 OS threads + thí nghiệm đối chứng `run_m5_speedup_probe.py`), tách riêng tại Phụ lục A của báo cáo.
+* **3 kiểm thử Verification bổ sung (`test_m4_review_guards.py::test_9..11`):** Bổ sung ba kỹ thuật Deterministic, Continuity và Seed Independence để phủ trọn 9 kỹ thuật verification.
+* **Phần mở rộng tùy chọn M5 (`drivethru/engines/`, `fig6`–`fig8`):** So sánh 3 kiến trúc thực thi DES (`sequential_engine.py`, mô hình lai `coroutine_engine.py` bọc Composition + `BkSysFuture`, `multithread_engine.py` 6 OS threads + thí nghiệm đối chứng `run_m5_speedup_probe.py`), tách riêng tại Chương 8 của báo cáo PDF.

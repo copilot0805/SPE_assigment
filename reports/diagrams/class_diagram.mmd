@@ -1,0 +1,82 @@
+classDiagram
+    class BkSysLogicalProcess {
+        <<bkitevsim abstract>>
+        +int lp_id
+        +float local_virt_time
+        +BkSysLogicalProcessState state
+        +initialize()
+        +handle_event(event)
+        +send_event(event)
+        +finalize()
+    }
+
+    class BkSysCoLogicalProcess {
+        <<bkitevsim>>
+        +coroutine_run()
+        +wait_for(event_type)
+        +wait_until(target_time)
+    }
+
+    class CarSourceLP {
+        +MultiStreamRNG rng
+        +int total_generated
+        +initialize()
+        +handle_event(event)
+    }
+
+    class StationLP {
+        +int station_idx
+        +float c
+        +float K
+        +bool blocking_order
+        +int unmatched_food_ready_count
+        +handle_event(event)
+        +get_statistics()
+    }
+
+    class PickupLP {
+        +PickupState state
+        +_handle_car_arrival_at_join(car, t)
+        +_handle_food_ready_at_join(car, t)
+        +_complete_join(car_id, entry, t)
+        +get_statistics()
+    }
+
+    class MonitorLP {
+        +MonitorState state
+        +bool record_trace
+        +bool record_event_log
+        +log_event(event)
+        +handle_event(event)
+        +get_statistics()
+    }
+
+    class SafeCoLogicalProcess {
+        +list error_sink
+        +wait_for(event_type)
+        +handle_event(event)
+        +coroutine_run()
+    }
+
+    class CoPickupLP {
+        -PickupLP _inner
+        -dict _join_futures
+        +on_event_safe(event)
+        -_await_join_future(car_id, fut)
+    }
+
+    class ThreadedClockCoordinator {
+        +LadderQueue event_queue
+        +dict workers
+        +run()
+    }
+
+    BkSysLogicalProcess <|-- CarSourceLP
+    BkSysLogicalProcess <|-- StationLP
+    StationLP <|-- PickupLP
+    BkSysLogicalProcess <|-- MonitorLP
+    BkSysLogicalProcess <|-- BkSysCoLogicalProcess
+    BkSysCoLogicalProcess <|-- SafeCoLogicalProcess
+    SafeCoLogicalProcess <|-- CoPickupLP
+    CoPickupLP *-- PickupLP : composition
+    ThreadedClockCoordinator o-- BkSysLogicalProcess : 6 OS Threads
