@@ -24,7 +24,7 @@ def attach_global_monotonic_guard(lps: Iterable[BkSysLogicalProcess]) -> List[fl
                 raise RuntimeError(
                     f"Thời gian toàn cục đi lùi tại LP {_lp_id}: "
                     f"t={ev.timestamp:.6f} < global_last_t={last_global_t[0]:.6f} "
-                    f"({ev.event_type}) — kiểm tra bucket_width!"
+                    f"({ev.event_type}) - kiểm tra bucket_width!"
                 )
             last_global_t[0] = ev.timestamp
             return _orig(ev)

@@ -92,7 +92,7 @@ def sync_exp_d_crn_pairs(
 
     if sync_targets:
         print(
-            "[Exp D CRN Sync] Đồng bộ tập seed chung 1..R lớn nhất theo §2.5 cho: "
+            "[Exp D CRN Sync] Đồng bộ tập seed chung 1..R lớn nhất theo Mục 2.5 cho: "
             + ", ".join(f"{c.config_id}(->R={c.base_replications})" for c in sync_targets)
         )
         synced = run_batch_with_checkpoint(
@@ -127,12 +127,12 @@ def main(max_workers: int = 4) -> None:
     write_summary_csv(reports_dir / "exp_b_summary.csv", exp_b_rows)
 
     print("=" * 108)
-    print("KẾT QUẢ THÍ NGHIỆM B — ĐƯỜNG CƠ SỞ (c2=1, K1=8) & ĐỐI CHIẾU XẤP XỈ FORK-JOIN (K1=30)")
+    print("KẾT QUẢ THÍ NGHIỆM B - ĐƯỜNG CƠ SỞ (c2=1, K1=8) & ĐỐI CHIẾU XẤP XỈ FORK-JOIN (K1=30)")
     print("=" * 108)
-    print(f"{'Cấu hình':<20} | {'lam':<4} | {'T (Mean±CI95)':>17} | {'P95(T)':>7} | {'Pb (%)':>7} | {'U1':>5} | {'U2':>5} | {'U3':>5} | {'U4':>5} | {'Wf':>5}")
+    print(f"{'Cấu hình':<20} | {'lam':<4} | {'T (Mean+/-CI95)':>17} | {'P95(T)':>7} | {'Pb (%)':>7} | {'U1':>5} | {'U2':>5} | {'U3':>5} | {'U4':>5} | {'Wf':>5}")
     print("-" * 108)
     for r in exp_b_rows:
-        t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
+        t_str = f"{r['T_mean']:7.3f} +/- {r['T_hw']:5.3f}"
         print(
             f"{r['config_id']:<20} | {r['lam']:<4.1f} | {t_str:>17} | {r['P95_T_mean']:7.3f} | "
             f"{r['P_b_mean']*100:6.2f}% | {r['U1_mean']:5.3f} | {r['U2_mean']:5.3f} | "
@@ -156,17 +156,17 @@ def main(max_workers: int = 4) -> None:
     write_summary_csv(reports_dir / "exp_c_summary.csv", exp_c_rows)
 
     print("\n" + "=" * 112)
-    print("KẾT QUẢ THÍ NGHIỆM C — CẤU HÌNH ĐẠT SLA TẠI CAO ĐIỂM PEAK (lam=0.6: T <= 8.0 phút & Pb <= 5%)")
+    print("KẾT QUẢ THÍ NGHIỆM C - CẤU HÌNH ĐẠT SLA TẠI CAO ĐIỂM PEAK (lam=0.6: T <= 8.0 phút & Pb <= 5%)")
     print("=" * 112)
     peak_c = [r for r in exp_c_rows if abs(r["lam"] - 0.6) < 1e-9]
-    print(f"{'c2':<4} | {'K1':<4} | {'R':<3} | {'T (Mean±CI95)':>17} | {'P95(T)':>7} | {'P(T>8)':>7} | {'Pb (%)':>14} | {'U2':>6} | {'SLA':<8}")
+    print(f"{'c2':<4} | {'K1':<4} | {'R':<3} | {'T (Mean+/-CI95)':>17} | {'P95(T)':>7} | {'P(T>8)':>7} | {'Pb (%)':>15} | {'U2':>6} | {'SLA':<8}")
     print("-" * 112)
     for r in peak_c:
-        t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
-        pb_str = f"{r['P_b_mean']*100:5.2f} ± {r['P_b_hw']*100:4.2f}%"
+        t_str = f"{r['T_mean']:7.3f} +/- {r['T_hw']:5.3f}"
+        pb_str = f"{r['P_b_mean']*100:5.2f} +/- {r['P_b_hw']*100:4.2f}%"
         print(
             f"{r['c2']:<4} | {r['K1']:<4} | {r['R']:<3} | {t_str:>17} | {r['P95_T_mean']:7.3f} | "
-            f"{r['P_T_gt_8_mean']*100:6.2f}% | {pb_str:>14} | {r['U2_mean']:6.3f} | {r['sla_status']:<8}"
+            f"{r['P_T_gt_8_mean']*100:6.2f}% | {pb_str:>15} | {r['U2_mean']:6.3f} | {r['sla_status']:<8}"
         )
 
     # --- 3. TỔNG HỢP THÍ NGHIỆM D ---
@@ -174,18 +174,18 @@ def main(max_workers: int = 4) -> None:
     write_summary_csv(reports_dir / "exp_d_summary.csv", exp_d_rows)
 
     print("\n" + "=" * 112)
-    print("KẾT QUẢ THÍ NGHIỆM D — SO SÁNH KHÔNG CHẶN (NON-BLOCKING) vs CHẶN (BLOCKING) TẠI c2=2, K1=8")
+    print("KẾT QUẢ THÍ NGHIỆM D - SO SÁNH KHÔNG CHẶN (NON-BLOCKING) vs CHẶN (BLOCKING) TẠI c2=2, K1=8")
     print("=" * 112)
-    print(f"{'lam':<5} | {'Biến thể':<14} | {'R':<3} | {'T (Mean±CI95)':>17} | {'Pb (%)':>14} | {'U1':>14} | {'Wf (phút)':>10}")
+    print(f"{'lam':<5} | {'Biến thể':<14} | {'R':<3} | {'T (Mean+/-CI95)':>17} | {'Pb (%)':>15} | {'U1':>16} | {'Wf (phút)':>10}")
     print("-" * 112)
     for lam in (0.4, 0.6, 0.7):
         nb = summary_by_id[f"C_lam{int(round(lam * 10))}_c2_2_K1_8"]
         blk = summary_by_id[f"D_BLK_lam{int(round(lam * 10))}_c2_2_K1_8"]
         for label, r in [("Non-blocking", nb), ("Blocking", blk)]:
-            t_str = f"{r['T_mean']:7.3f} ± {r['T_hw']:5.3f}"
-            pb_str = f"{r['P_b_mean']*100:5.2f} ± {r['P_b_hw']*100:4.2f}%"
-            u1_str = f"{r['U1_mean']:6.3f} ± {r['U1_hw']:5.3f}"
-            print(f"{lam:<5.1f} | {label:<14} | {r['R']:<3} | {t_str:>17} | {pb_str:>14} | {u1_str:>14} | {r['W_f_mean']:10.4f}")
+            t_str = f"{r['T_mean']:7.3f} +/- {r['T_hw']:5.3f}"
+            pb_str = f"{r['P_b_mean']*100:5.2f} +/- {r['P_b_hw']*100:4.2f}%"
+            u1_str = f"{r['U1_mean']:6.3f} +/- {r['U1_hw']:5.3f}"
+            print(f"{lam:<5.1f} | {label:<14} | {r['R']:<3} | {t_str:>17} | {pb_str:>15} | {u1_str:>16} | {r['W_f_mean']:10.4f}")
         print("-" * 112)
 
     all_prec_ok = all(s["precision_ok"] for s in summaries)

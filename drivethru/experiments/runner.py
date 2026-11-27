@@ -170,10 +170,10 @@ def check_precision_details(
     pb_abs_tol: float = 0.003,
 ) -> Dict[str, Any]:
     """
-    Kiểm tra đầy đủ tiêu chí độ chính xác theo Bảng 4 §2.5 Thiết kế V2:
+    Kiểm tra đầy đủ tiêu chí độ chính xác theo Bảng 4 Mục 2.5 Thiết kế V2:
     - T, U1..U4, L1..L4, L_system, W1..W4: nửa độ rộng CI 95% <= 5% giá trị trung bình (bỏ qua nếu mean ~ 0).
     - P_b: nửa độ rộng CI 95% <= 0.003 (0.3 điểm phần trăm).
-    - Đồng thời đánh giá trạng thái SLA 3 mức (PASS / FAIL / BOUNDARY) theo §2.6.
+    - Đồng thời đánh giá trạng thái SLA 3 mức (PASS / FAIL / BOUNDARY) theo Mục 2.6.
     """
     failed_metrics: List[str] = []
     worst_rel_metric = "T"
@@ -287,9 +287,9 @@ def run_batch_with_checkpoint(
             print(" " * 118, end="\r")
             print(
                 f"  [OK {idx:02d}/{total_cfgs:02d}] {cfg.config_id:<22} | R={len(rep_list):02d} | "
-                f"T={ci_t['mean']:6.3f}±{ci_t['half_width']:.3f} | "
+                f"T={ci_t['mean']:6.3f}+/-{ci_t['half_width']:.3f} | "
                 f"maxHW={det['worst_rel_hw_pct']:4.2f}%({det['worst_rel_metric']}) | "
-                f"Pb={ci_pb['mean']*100:5.2f}±{ci_pb['half_width']*100:.2f}% | "
+                f"Pb={ci_pb['mean']*100:5.2f}+/-{ci_pb['half_width']*100:.2f}% | "
                 f"SLA={det['sla_status']:<8} | Little<={max_little:.2f}% | {dt:5.1f}s",
                 flush=True,
             )

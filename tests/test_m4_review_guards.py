@@ -27,7 +27,7 @@ class TestM4ReviewGuards(unittest.TestCase):
         self.assertFalse(Path("drivethru/metrics/statistics.py").exists())
 
     def test_2_sla_three_state_pass_fail_boundary(self):
-        """Điểm 2: Quy tắc 3 trạng thái PASS / FAIL / BOUNDARY theo §2.6."""
+        """Điểm 2: Quy tắc 3 trạng thái PASS / FAIL / BOUNDARY theo Mục 2.6; CI95 dùng Student-t và P95 theo xếp hạng gần nhất."""
         self.assertEqual(
             evaluate_sla_status({"ci_low": 5.1, "ci_high": 5.5}, {"ci_low": 0.005, "ci_high": 0.010}),
             "PASS",
@@ -44,6 +44,17 @@ class TestM4ReviewGuards(unittest.TestCase):
             evaluate_sla_status({"ci_low": 5.1, "ci_high": 5.5}, {"ci_low": 0.048, "ci_high": 0.052}),
             "BOUNDARY",
         )
+
+        # CI95 dùng phân phối Student-t (không dùng z = 1.96): n = 30, df = 29, so với giá trị tính tay
+        ci = compute_ci95([float(i) for i in range(1, 31)])
+        s = math.sqrt(sum((i - 15.5) ** 2 for i in range(1, 31)) / 29)
+        self.assertAlmostEqual(ci["half_width"], 2.04523 * s / math.sqrt(30), places=6)
+
+        # P95 theo xếp hạng gần nhất: 100 mẫu 1..100 cho P95 = 95
+        mon = MonitorLP(t_warmup=0.0, t_end=100.0)
+        mon.state.t_samples.extend(float(i) for i in range(1, 101))
+        mon.state.wf_samples.extend(0.0 for _ in range(100))
+        self.assertEqual(mon.get_statistics()["P95_T"], 95.0)
 
     def test_3_runtime_monotonic_time_guard(self):
         """Điểm 5b: Chốt chặn lúc chạy ném RuntimeError ngay khi timestamp đi lùi."""
@@ -156,7 +167,7 @@ class TestM4ReviewGuards(unittest.TestCase):
         self.assertAlmostEqual(res["P_b"], 0.0, places=9)
 
     def test_10_pe7_continuity_test_small_lambda_perturbation(self):
-        """pe7 Verification (Continuity test): Đổi nhẹ λ (0.60 -> 0.61) -> T và U2 biến thiên mượt, không nhảy cóc."""
+        """pe7 Verification (Continuity test): Đổi nhẹ lam (0.60 -> 0.61) -> T và U2 biến thiên mượt, không nhảy cóc."""
         p60 = DriveThruParams(lam=0.60, c2=2, K1=8, t_warmup=500.0, t_end=3000.0)
         p61 = DriveThruParams(lam=0.61, c2=2, K1=8, t_warmup=500.0, t_end=3000.0)
         r60 = [run_drivethru_network(p60, seed=s) for s in range(1, 6)]
@@ -169,8 +180,8 @@ class TestM4ReviewGuards(unittest.TestCase):
 
         rel_dt = abs(t61 - t60) / t60
         rel_du = (u61 - u60) / u60
-        self.assertLess(rel_dt, 0.08, f"T nhảy bất thường khi đổi nhẹ λ 0.60->0.61: {rel_dt:.2%}")
-        self.assertGreater(rel_du, 0.0, "U2 phải tăng nhẹ khi λ tăng từ 0.60 lên 0.61")
+        self.assertLess(rel_dt, 0.08, f"T nhảy bất thường khi đổi nhẹ lam 0.60->0.61: {rel_dt:.2%}")
+        self.assertGreater(rel_du, 0.0, "U2 phải tăng nhẹ khi lam tăng từ 0.60 lên 0.61")
         self.assertLess(rel_du, 0.06, f"U2 nhảy bất thường: {rel_du:.2%}")
 
     def test_11_pe7_seed_independence_two_disjoint_groups(self):

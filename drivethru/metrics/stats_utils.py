@@ -57,7 +57,7 @@ def evaluate_sla_status(
     eps: float = 1e-12,
 ) -> str:
     """
-    Đánh giá trạng thái SLA 3 mức theo §2.6 Thiết kế V2:
+    Đánh giá trạng thái SLA 3 mức theo Mục 2.6 Thiết kế V2:
     - 'FAIL'     : Ít nhất 1 chỉ số có cận dưới CI 95% vượt ngưỡng (chắc chắn không đạt).
     - 'PASS'     : Cả hai chỉ số có cận trên CI 95% <= ngưỡng (chắc chắn đạt).
     - 'BOUNDARY' : Chưa chắc chắn FAIL, nhưng CI 95% của T hoặc P_b chứa ngưỡng -> cần chạy thêm.

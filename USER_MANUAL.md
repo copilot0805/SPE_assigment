@@ -7,7 +7,7 @@ Nhóm **XX-08** (Lớp L02 — CO3007 Đánh giá Hiệu năng Hệ thống, ĐH
 ## 1. Yêu cầu Môi trường & Cài đặt
 * **Môi trường kiểm thử chính thức:** Windows 11, CPU 4-core/8-thread, Python 3.12.10 (CPython có GIL).
 * **Thư viện lõi:** 100% thư viện chuẩn Python.
-* **Thư viện vẽ biểu đồ (dùng cho `plot_results.py`, `run_welch_warmup.py`, `analyze_step9.py`, `plot_m5_benchmark.py`):**
+* **Thư viện ngoài (dùng cho `plot_results.py`, `run_welch_warmup.py`, `analyze_step9.py`, `plot_m5_benchmark.py` và `supplementary_checks.py`; phần lõi mô phỏng và `audit_invariants.py` chỉ cần thư viện chuẩn):**
 ```powershell
 python -m pip install matplotlib numpy
 ```
@@ -20,7 +20,7 @@ python -m pip install matplotlib numpy
 * `drivethru/core/`: `event_types.py` (6 LPID, 10 EventType), `distributions.py` (5 dòng RNG CRN), `state.py` (`CarRecord`, `StationState`, `PickupState`, `MonitorState`).
 * `drivethru/models/`: `car_source.py`, `station.py` (dùng chung cho 6 mô hình đơn và Order/Payment/Kitchen), `pickup.py` (`PickupLP(StationLP)` + bảng Join đối xứng), `monitor.py` (thống kê đầu-cuối + log sự kiện tùy chọn).
 * `drivethru/metrics/`: `analytical.py` (giải tích 6 mô hình đơn & xấp xỉ Fork–Join), `stats_utils.py` (CI 95% Student-t, Little's Law, phân loại SLA 3 mức `PASS`/`FAIL`/`BOUNDARY`).
-* `drivethru/experiments/`: `run_single.py`, `run_hand_trace.py`, `run_welch_warmup.py`, `run_exp_a.py`, `runner.py`, `run_exp_bcd.py`, `plot_results.py`, `analyze_step9.py` (phân tích Bước 9), cùng bộ benchmark M5 (`run_m5_benchmark.py`, `run_m5_speedup_probe.py`, `plot_m5_benchmark.py`).
+* `drivethru/experiments/`: `run_single.py`, `run_hand_trace.py`, `run_welch_warmup.py`, `run_exp_a.py`, `runner.py`, `run_exp_bcd.py`, `plot_results.py`, `analyze_step9.py` (phân tích Bước 9), `audit_invariants.py` (hậu kiểm bất biến trên CSV), `supplementary_checks.py` (hai kiểm tra bổ sung: Little ở cửa sổ đo dài hơn, độ nhạy theo warm-up), cùng bộ benchmark M5 (`run_m5_benchmark.py`, `run_m5_speedup_probe.py`, `plot_m5_benchmark.py`).
 * `drivethru/engines/` *(Mở rộng M5)*:
   * `sequential_engine.py`: chạy trực tiếp `drivethru/models/` trên `SequentialEventDispatcher`.
   * `coroutine_engine.py`: mô hình lai trên `BkSysCoEventLoop`, dùng các lớp bọc mỏng Composition (`CoCarSourceLP`, `CoStationLP`, `CoPickupLP`, `CoMonitorLP`) ủy quyền logic sang `drivethru/models/` và bổ sung `BkSysFuture` tại điểm Join.
@@ -60,6 +60,16 @@ python -m drivethru.experiments.plot_results
 #    -> reports/exp_d_paired_crn.csv          (CI 95% ghép cặp CRN, Exp D)
 #    -> reports/fig9_pareto_T_vs_Pb.(png|pdf), reports/fig10_allocation_of_variation.(png|pdf)
 python -m drivethru.experiments.analyze_step9
+
+# 9. Hậu kiểm bất biến trên dữ liệu thô (chỉ đọc CSV, chạy vài giây, phải chạy sau bước 6):
+#    -> reports/audit_invariants.csv      (cân bằng dòng, thông lượng lambda_eff, định luật Little theo từng trạm và toàn hệ)
+#    -> reports/audit_seeds30_exp_c.csv   (Exp C tính lại trên 30 seed chung: trạng thái SLA và cấu hình khuyến nghị)
+#    Mã thoát là 1 nếu một khẳng định của báo cáo bị vi phạm.
+python -m drivethru.experiments.audit_invariants
+
+# 10. Hai kiểm tra bổ sung của báo cáo (cần numpy; chạy vài phút):
+#    -> reports/supplementary_checks.csv  (Little của lượt tệ nhất ở cửa sổ đo dài hơn; độ nhạy theo warm-up 2000 so với 4000)
+python -m drivethru.experiments.supplementary_checks
 ```
 
 ---
@@ -81,7 +91,7 @@ python -m drivethru.experiments.plot_m5_benchmark
 ---
 
 ## 5. Vị trí Đầu ra & Lưu ý Tái lập
-* **Nguồn số liệu chính thức (CSV):** `reports/exp_a_validation.csv`, `reports/exp_b_summary.csv`, `reports/exp_c_summary.csv`, `reports/exp_d_summary.csv`, `reports/exp_welch_warmup.csv`, `reports/exp_c_sensitivity_anova.csv`, `reports/exp_c_min_sla_configs.csv`, `reports/exp_c_little_audit.csv`, `reports/exp_d_paired_crn.csv`, `reports/exp_m5_benchmark.csv`, `reports/exp_m5_speedup_probe.csv`.
+* **Nguồn số liệu chính thức (CSV):** `reports/exp_a_validation.csv`, `reports/exp_b_summary.csv`, `reports/exp_c_summary.csv`, `reports/exp_d_summary.csv`, `reports/exp_welch_warmup.csv`, `reports/exp_c_sensitivity_anova.csv`, `reports/exp_c_min_sla_configs.csv`, `reports/exp_c_little_audit.csv`, `reports/exp_d_paired_crn.csv`, `reports/audit_invariants.csv`, `reports/audit_seeds30_exp_c.csv`, `reports/supplementary_checks.csv`, `reports/exp_m5_benchmark.csv`, `reports/exp_m5_speedup_probe.csv`.
 * **Bảng trace kiểm tay:** `reports/hand_trace_10_cars.md`.
 * **Biểu đồ (PNG và PDF vector):** `fig0_welch_warmup`, `fig1` .. `fig5` (chính), `fig9` (Pareto T–P_b), `fig10` (phân bổ phương sai), `fig6` .. `fig8` (mở rộng M5). Tiêu đề trong hình là tiêu đề ngắn; tiêu đề đầy đủ dùng làm caption nằm trong `reports/figure_captions.md`.
-* **Chạy mới hoàn toàn:** Xóa thư mục `reports/` trước khi chạy; nếu tham số hoặc `MODEL_CODE_VERSION` đổi, `runner.py` tự động sao lưu checkpoint cũ sang `.bak` và chạy mới.
+* **Chạy mới hoàn toàn:** Chỉ xóa các tệp `.csv` trong `reports/` trước khi chạy, không xóa cả thư mục (`reports/diagrams/` và `reports/figure_captions.md` là tài liệu soạn tay, không do script sinh ra); nếu tham số hoặc `MODEL_CODE_VERSION` đổi, `runner.py` tự động sao lưu checkpoint cũ sang `.bak` và chạy mới.

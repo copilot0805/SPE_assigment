@@ -57,7 +57,7 @@ def plot_fig1_e2e_time(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
 
 
 def plot_fig2_blocking_prob(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
-    """Biểu đồ 2: Xác suất từ chối P_b (%) theo sức chứa Order K1 tại từng mức workload λ (c2=2)."""
+    """Biểu đồ 2: Xác suất từ chối P_b (%) theo sức chứa Order K1 tại từng mức workload lam (c2=2)."""
     sub = [r for r in exp_c if int(r["c2"]) == 2]
     k1_vals = sorted({int(r["K1"]) for r in sub})
     lam_labels = [(0.2, "Light (λ=0.2)"), (0.4, "Normal (λ=0.4)"), (0.6, "Peak (λ=0.6)"), (0.7, "Heavy (λ=0.7)")]
@@ -85,7 +85,7 @@ def plot_fig2_blocking_prob(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
 
 
 def plot_fig3_utilization(exp_c: List[Dict[str, str]], out_dir: Path) -> None:
-    """Biểu đồ 3: Độ sử dụng tài nguyên U_i của 4 trạm theo λ (so sánh c2=1 Baseline và c2=2)."""
+    """Biểu đồ 3: Độ sử dụng tài nguyên U_i của 4 trạm theo lam (so sánh c2=1 Baseline và c2=2)."""
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.2), sharey=True)
     stations = [
         ("U1", "Order (U1)", "#1f77b4", "o"),
@@ -162,7 +162,7 @@ def plot_fig4_exp_a(exp_a_path: Path, out_dir: Path) -> None:
 
 
 def plot_fig5_exp_d(exp_d: List[Dict[str, str]], out_dir: Path) -> None:
-    """Biểu đồ 5: Biểu đồ cột so sánh T, P_b và U1 giữa Không chặn và Chặn theo λ (Exp D)."""
+    """Biểu đồ 5: Biểu đồ cột so sánh T, P_b và U1 giữa Không chặn và Chặn theo lam (Exp D)."""
     lambdas = [0.4, 0.6, 0.7]
     nb_map = {float(r["lam"]): r for r in exp_d if "ExpD_NB" in r["exp_tags"]}
     blk_map = {float(r["lam"]): r for r in exp_d if "ExpD_BLK" in r["exp_tags"]}

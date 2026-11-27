@@ -110,7 +110,7 @@ class TestM3NetworkGate(unittest.TestCase):
         for key in ("little_err_s1", "little_err_s2", "little_err_s3", "little_err_s4", "little_err_sys"):
             self.assertLessEqual(res[key], 0.01, f"{key} vượt ngưỡng 1%: {res[key]:.4%}")
 
-        # Cân bằng thông lượng các trạm sau Order: X2 ≈ X3 ≈ X4 ≈ X1
+        # Cân bằng thông lượng các trạm sau Order: X2 ~ X3 ~ X4 ~ X1
         x1 = res["X1"]
         for x_other in (res["X2"], res["X3"], res["X4"], res["X"]):
             self.assertLessEqual(abs(x_other - x1) / x1, 0.01)

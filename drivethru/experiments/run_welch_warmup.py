@@ -58,7 +58,7 @@ def run_welch_study(
     max_workers: int = 4,
 ) -> None:
     """
-    Kiểm chứng độ đủ của t_warmup = 2000 phút bằng phương pháp Welch (R=60 seeds, dải ±5%).
+    Kiểm chứng độ đủ của t_warmup = 2000 phút bằng phương pháp Welch (R=60 seeds, dải +/-5%).
     Loại bỏ 4 bin cắt cụt cuối + w bin co cửa sổ ở mép phải để mức ổn định không bị kéo tụt giả tạo.
     """
     n_bins = int(t_end // bin_width)

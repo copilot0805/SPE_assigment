@@ -25,7 +25,7 @@ def run_allocation_of_variation_with_sse(
 ) -> List[Dict[str, Any]]:
     """
     Phân bổ phương sai (Allocation of Variation, pe9 & pe10) cho thiết kế giai thừa đầy đủ
-    có lặp cân bằng: 4 mức λ × 3 mức c2 × 4 mức K1 × 30 seeds = 1,440 lượt từ exp_bcd_raw_runs.csv.
+    có lặp cân bằng: 4 mức lam x 3 mức c2 x 4 mức K1 x 30 seeds = 1,440 lượt từ exp_bcd_raw_runs.csv.
     Phân rã chính xác: SST = SS_lam + SS_c2 + SS_K1 + SS_lam_c2 + SS_lam_K1 + SS_c2_K1 + SS_lam_c2_K1 + SSE.
     """
     exp_c_raw = [r for r in raw_bcd if "ExpC" in r["exp_tags"] and int(r["seed"]) <= n_reps]
@@ -50,11 +50,11 @@ def run_allocation_of_variation_with_sse(
 
     out_rows: List[Dict[str, Any]] = []
     print("=" * 118)
-    print(f"BƯỚC 9.1 — PHÂN BỔ PHƯƠNG SAI CÓ SAI SỐ THÍ NGHIỆM SSE (pe9/pe10 — {a}×{b}×{c}×{n_reps} = {a*b*c*n_reps} lượt)")
+    print(f"BƯỚC 9.1 - PHÂN BỔ PHƯƠNG SAI CÓ SAI SỐ THÍ NGHIỆM SSE (pe9/pe10 - {a}x{b}x{c}x{n_reps} = {a*b*c*n_reps} lượt)")
     print("=" * 118)
     print(
-        f"{'Chỉ số':<24} | {'λ (%)':>6} | {'c2 (%)':>6} | {'K1 (%)':>6} | "
-        f"{'λ×c2':>6} | {'λ×K1':>6} | {'c2×K1':>6} | {'3-way':>6} | {'SSE(%)':>6} | {'Top tác động'}"
+        f"{'Chỉ số':<24} | {'lam(%)':>6} | {'c2 (%)':>6} | {'K1 (%)':>6} | "
+        f"{'lam*c2':>6} | {'lam*K1':>6} | {'c2*K1':>6} | {'3-way':>6} | {'SSE(%)':>6} | {'Top tác động'}"
     )
     print("-" * 118)
 
@@ -185,8 +185,8 @@ def plot_fig10_allocation_of_variation(anova_rows: List[Dict[str, Any]]) -> None
 
 def compute_exp_d_paired_crn(raw_bcd: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     """
-    Tính khoảng tin cậy 95% ghép cặp (Paired-t CI) cho hiệu Δ = Blocking - Non-blocking
-    theo từng seed CRN chung ở Exp D (c2=2, K1=8, λ ∈ {0.4, 0.6, 0.7}).
+    Tính khoảng tin cậy 95% ghép cặp (Paired-t CI) cho hiệu Delta = Blocking - Non-blocking
+    theo từng seed CRN chung ở Exp D (c2=2, K1=8, lam in {0.4, 0.6, 0.7}).
     """
     by_cfg_seed: Dict[str, Dict[int, Dict[str, str]]] = {}
     for r in raw_bcd:
@@ -194,9 +194,9 @@ def compute_exp_d_paired_crn(raw_bcd: List[Dict[str, str]]) -> List[Dict[str, An
 
     out_rows: List[Dict[str, Any]] = []
     print("=" * 116)
-    print("BƯỚC 9.2 — SO SÁNH GHÉP CẶP CRN (PAIRED CI 95%) CHO EXP D: Δ = BLOCKING − NON-BLOCKING (c2=2, K1=8)")
+    print("BƯỚC 9.2 - SO SÁNH GHÉP CẶP CRN (PAIRED CI 95%) CHO EXP D: Delta = BLOCKING - NON-BLOCKING (c2=2, K1=8)")
     print("=" * 116)
-    print(f"{'λ':<4} | {'n_pair':>6} | {'ΔT ± CI95 (phút)':>19} | {'ΔP_b ± CI95 (pp)':>19} | {'ΔU1 ± CI95 (pp)':>19} | {'ΔW_f ± CI95 (phút)':>19}")
+    print(f"{'lam':<4} | {'n_pair':>6} | {'dT +/- CI95 (phút)':>19} | {'dP_b +/- CI95 (pp)':>19} | {'dU1 +/- CI95 (pp)':>19} | {'dW_f +/- CI95 (phút)':>20}")
     print("-" * 116)
 
     for lam in (0.4, 0.6, 0.7):
@@ -220,10 +220,10 @@ def compute_exp_d_paired_crn(raw_bcd: List[Dict[str, str]]) -> List[Dict[str, An
         })
         print(
             f"{lam:<4.1f} | {len(common_seeds):>6d} | "
-            f"{ci_dt['mean']:+7.3f} ± {ci_dt['half_width']:6.3f}    | "
-            f"{ci_dpb['mean']:+7.3f} ± {ci_dpb['half_width']:6.3f}    | "
-            f"{ci_du1['mean']:+7.3f} ± {ci_du1['half_width']:6.3f}    | "
-            f"{ci_dwf['mean']:+7.4f} ± {ci_dwf['half_width']:6.4f}"
+            f"{ci_dt['mean']:+7.3f} +/- {ci_dt['half_width']:6.3f}  | "
+            f"{ci_dpb['mean']:+7.3f} +/- {ci_dpb['half_width']:6.3f}  | "
+            f"{ci_du1['mean']:+7.3f} +/- {ci_du1['half_width']:6.3f}  | "
+            f"{ci_dwf['mean']:+7.4f} +/- {ci_dwf['half_width']:6.4f}"
         )
 
     out_path = REPORTS_DIR / "exp_d_paired_crn.csv"
@@ -240,10 +240,10 @@ def build_min_sla_table(exp_c: List[Dict[str, str]]) -> List[Dict[str, Any]]:
     out_rows: List[Dict[str, Any]] = []
 
     print("=" * 114)
-    print("BƯỚC 9.3 — BẢNG CẤU HÌNH TỐI THIỂU ĐẠT SLA & KHUYẾN NGHỊ VẬN HÀNH THEO TỪNG MỨC TẢI λ")
+    print("BƯỚC 9.3 - BẢNG CẤU HÌNH TỐI THIỂU ĐẠT SLA & KHUYẾN NGHỊ VẬN HÀNH THEO TỪNG MỨC TẢI lam")
     print("=" * 114)
     print(
-        f"{'Kịch bản':<10} | {'Đạt/12':>6} | {'Tối thiểu (SLA)':<16} | {'T ± CI95':>15} | {'Pb (%)':>7} | {'U2':>5} | "
+        f"{'Kịch bản':<10} | {'Đạt/12':>6} | {'Tối thiểu (SLA)':<16} | {'T +/- CI95':>16} | {'Pb (%)':>7} | {'U2':>5} | "
         f"{'Khuyến nghị (U2<0.8,Pb<1.5%)':<28}"
     )
     print("-" * 114)
@@ -269,7 +269,7 @@ def build_min_sla_table(exp_c: List[Dict[str, str]]) -> List[Dict[str, Any]]:
         })
         print(
             f"{sc_name:<10} | {len(passed):>2d}/12  | c2={int(min_cfg['c2'])}, K1={int(min_cfg['K1']):<8} | "
-            f"{float(min_cfg['T_mean']):6.3f} ± {float(min_cfg['T_hw']):5.3f} | "
+            f"{float(min_cfg['T_mean']):6.3f} +/- {float(min_cfg['T_hw']):5.3f} | "
             f"{float(min_cfg['P_b_mean'])*100:6.2f}% | {float(min_cfg['U2_mean']):5.3f} | "
             f"c2={int(rec_cfg['c2'])}, K1={int(rec_cfg['K1'])} (T={float(rec_cfg['T_mean']):.2f}p, Pb={float(rec_cfg['P_b_mean'])*100:.2f}%)"
         )
@@ -329,7 +329,7 @@ def audit_littles_law(raw_bcd: List[Dict[str, str]]) -> List[Dict[str, Any]]:
         writer.writerows(audit_rows)
 
     print("=" * 114)
-    print("BƯỚC 9.4 — KIỂM TOÁN SAI SỐ ĐỊNH LUẬT LITTLE (SINGLE-RUN MAX vs. ENSEMBLE MEAN & HIỆU ỨNG XE CÒN SÓT)")
+    print("BƯỚC 9.4 - KIỂM TOÁN SAI SỐ ĐỊNH LUẬT LITTLE (SINGLE-RUN MAX vs. ENSEMBLE MEAN & HIỆU ỨNG XE CÒN SÓT)")
     print("=" * 114)
     print(
         f"Tổng hợp {len(by_cfg)} cấu hình ({len(raw_bcd)} lượt chạy): "

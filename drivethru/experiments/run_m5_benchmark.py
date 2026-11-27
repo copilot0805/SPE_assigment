@@ -96,7 +96,7 @@ def run_m5_benchmark() -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
     print("=" * 102)
-    print("M5 BENCHMARK (1-CORE SEQUENTIAL PROCESS — ĐA MỨC t_end & ĐA MỨC λ, PYTHON HEAP & CAR-BY-CAR TRACE)")
+    print("M5 BENCHMARK (1-CORE SEQUENTIAL PROCESS - ĐA MỨC t_end & ĐA MỨC lam, PYTHON HEAP & CAR-BY-CAR TRACE)")
     print(f"Python: {platform.python_version()} | OS: {platform.platform()}")
     print(f"Scenarios: {len(SCENARIOS)} kịch bản x 3 engines x R={len(SEEDS)} seeds (c2=2, K1=6, t_warmup={T_WARMUP:.0f})")
     print("=" * 102)
@@ -232,7 +232,7 @@ def run_m5_benchmark() -> None:
     summary_rows: List[Dict[str, Any]] = []
     print("\n" + "=" * 128)
     print(
-        f"{'Scenario':<19} | {'Engine':<11} | {'Events':>7} | {'Wall (s) ± CI95':>18} | {'Slow':>6} | "
+        f"{'Scenario':<19} | {'Engine':<11} | {'Events':>7} | {'Wall (s) +/- CI95':>19} | {'Slow':>6} | "
         f"{'Thr(ev/s)':>10} | {'CPU/W':>5} | {'HeapMB':>6} | {'1LP%':>5} | {'ActLP':>5} | {'CarErr':>7}"
     )
     print("-" * 128)
@@ -286,7 +286,7 @@ def run_m5_benchmark() -> None:
             summary_rows.append(srow)
             print(
                 f"{sc_id:<19} | {engine_name:<11} | {ev_mean:7.0f} | "
-                f"{ci_wall['mean']:7.4f} ± {ci_wall['half_width']:7.4f} | {slowdown:5.2f}x | "
+                f"{ci_wall['mean']:7.4f} +/- {ci_wall['half_width']:7.4f} | {slowdown:5.2f}x | "
                 f"{ci_thr['mean']:10,.0f} | {ci_ratio['mean']:5.2f} | {ci_mem['mean']:6.3f} | "
                 f"{pct_1lp:5.1f} | {avg_act:5.2f} | {max_car:7.1e}"
             )

@@ -1,0 +1,50 @@
+check,scope,metric,value,note
+flow,all_runs,n_runs,1660,
+flow,all_runs,n_identity_ok,1660,total_generated = total_completed + total_dropped + n_unfinished_total (recomputed from the total columns)
+flow,all_runs,n_flag_ok,1660,flow_balance_ok column of the raw CSV (also covers the kitchen order identity)
+lambda_eff,all_runs,max_rel_diff_X2_vs_X1_pct,0.6669,C_lam7_c2_1_K1_8 seed 48
+lambda_eff,all_runs,max_rel_diff_X3_vs_X1_pct,0.1821,C_lam7_c2_1_K1_3 seed 15
+lambda_eff,all_runs,max_rel_diff_X4_vs_X1_pct,0.6669,C_lam7_c2_1_K1_8 seed 48
+lambda_eff,all_runs,max_rel_diff_X_vs_X1_pct,0.6669,C_lam7_c2_1_K1_8 seed 48
+lambda_eff,all_runs,max_rel_diff_pct,0.6669,C_lam7_c2_1_K1_8 seed 48
+lambda_eff,all_runs,n_runs_over_1pct,0,
+little,config_mean,max_err_s1_pct,0.1319,Order; D_BLK_lam7_c2_2_K1_8
+little,config_mean,max_err_s2_pct,0.345,Payment; C_lam7_c2_1_K1_8
+little,config_mean,max_err_s3_pct,0.1379,Kitchen; D_BLK_lam7_c2_2_K1_8
+little,config_mean,max_err_s4_pct,0.1638,Pickup; C_lam7_c2_1_K1_8
+little,config_mean,max_err_sys_pct,0.3123,system; C_lam7_c2_1_K1_8
+little,config_mean,n_config_station_over_1pct,0,"(config, station or system) pairs over 1% among 53 configs"
+little,single_run,max_err_s1_pct,0.3304,Order; D_BLK_lam7_c2_2_K1_8 seed 32
+little,single_run,n_runs_over_1pct_s1,0,Order
+little,single_run,max_err_s2_pct,2.4418,Payment; C_lam7_c2_1_K1_8 seed 48
+little,single_run,n_runs_over_1pct_s2,3,Payment
+little,single_run,max_err_s3_pct,0.5137,Kitchen; C_lam7_c2_1_K1_8 seed 27
+little,single_run,n_runs_over_1pct_s3,0,Kitchen
+little,single_run,max_err_s4_pct,0.4427,Pickup; C_lam7_c2_1_K1_8 seed 55
+little,single_run,n_runs_over_1pct_s4,0,Pickup
+little,single_run,max_err_sys_pct,1.835,system; C_lam7_c2_1_K1_8 seed 48
+little,single_run,n_runs_over_1pct_sys,2,system
+little,single_run,n_runs_any_over_1pct,3,runs where at least one station or the system exceeds 1%
+little,single_run,share_runs_all_within_1pct_pct,99.8193,
+little,single_run,max_abs_diff_vs_csv_columns_pct,0.0,recomputed value minus the stored little_err_* column (expected 0)
+seeds30,exp_c,n_configs,48,
+seeds30,exp_c,n_configs_R_gt_30,3,configs with R > 30 (R is chosen independently per config)
+seeds30,exp_c,n_status_match_exp_c_summary,48,SLA status recomputed from the raw runs (all R seeds) vs the sla_status column of exp_c_summary.csv
+seeds30,exp_c,n_same_status_all_vs_30,48,same SLA status with all R seeds and with the first 30 seeds only
+seeds30,exp_c,n_PASS_all,35,all R seeds
+seeds30,exp_c,n_FAIL_all,11,all R seeds
+seeds30,exp_c,n_BOUNDARY_all,2,all R seeds
+seeds30,exp_c,n_PASS_30,35,common seeds 1..30
+seeds30,exp_c,n_FAIL_30,11,common seeds 1..30
+seeds30,exp_c,n_BOUNDARY_30,2,common seeds 1..30
+seeds30,exp_c,max_abs_diff_T_min,0.3147,"C_lam7_c2_1_K1_6: T_all=12.0494, T_30=11.7347"
+seeds30,exp_c,max_abs_diff_Pb_pct,0.0419,"C_lam7_c2_1_K1_6: Pb_all=1.2993%, Pb_30=1.3412%"
+seeds30,lam=0.2,min_sla_config_all_vs_30,"c2=1,K1=3 | c2=1,K1=3",smallest config meeting the SLA: all R seeds | common 30 seeds
+seeds30,lam=0.2,recommended_config_all_vs_30,"c2=1,K1=3 | c2=1,K1=3",recommended config: all R seeds | common 30 seeds
+seeds30,lam=0.4,min_sla_config_all_vs_30,"c2=1,K1=3 | c2=1,K1=3",smallest config meeting the SLA: all R seeds | common 30 seeds
+seeds30,lam=0.4,recommended_config_all_vs_30,"c2=1,K1=4 | c2=1,K1=4",recommended config: all R seeds | common 30 seeds
+seeds30,lam=0.6,min_sla_config_all_vs_30,"c2=1,K1=4 | c2=1,K1=4",smallest config meeting the SLA: all R seeds | common 30 seeds
+seeds30,lam=0.6,recommended_config_all_vs_30,"c2=2,K1=6 | c2=2,K1=6",recommended config: all R seeds | common 30 seeds
+seeds30,lam=0.7,min_sla_config_all_vs_30,"c2=2,K1=6 | c2=2,K1=6",smallest config meeting the SLA: all R seeds | common 30 seeds
+seeds30,lam=0.7,recommended_config_all_vs_30,"c2=2,K1=6 | c2=2,K1=6",recommended config: all R seeds | common 30 seeds
+seeds30,exp_c,same_min_and_recommended_configs,1,1 if every load level picks the same configs

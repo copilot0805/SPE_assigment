@@ -71,7 +71,7 @@ def evaluate_exp_a(max_workers: int = 4) -> List[Dict[str, Any]]:
     print("=" * 124)
     print(
         f"{'Mã':<6} | {'Mô hình':<18} | {'lambda':<6} | {'Chỉ số':<6} | "
-        f"{'Lý thuyết':>10} | {'Mô phỏng (Mean ± CI95)':>25} | {'Sai số %':>9} | {'Little %':>8} | {'KQ':<5}"
+        f"{'Lý thuyết':>10} | {'Mô phỏng (Mean +/- CI95)':>25} | {'Sai số %':>9} | {'Little %':>8} | {'KQ':<5}"
     )
     print("-" * 124)
 
@@ -165,7 +165,7 @@ def evaluate_exp_a(max_workers: int = 4) -> List[Dict[str, Any]]:
                 if m in ("U", "L", "W", "P_b", "P_w"):
                     if abs(t_val) < 1e-12 and m in ("P_b", "P_w"):
                         continue
-                    ci_str = f"{s_mean:10.4f} ± {hw:7.4f}"
+                    ci_str = f"{s_mean:10.4f} +/- {hw:7.4f}"
                     print(
                         f"{cfg.code:<6} | {cfg.model_name:<18} | {cfg.lam:<6.2f} | {m:<6} | "
                         f"{t_val:10.4f} | {ci_str:>25} | {rel_err_pct:8.2f}% | {little_err_pct:7.2f}% | {status_str:<5}",

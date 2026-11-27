@@ -157,11 +157,11 @@ def _run_probe(engine: str, synchronized: bool, workload_kind: str, num_epochs: 
 def main() -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     print("=" * 116)
-    print("M5 CONTROLLED SPEEDUP PROBE — KIỂM CHỨNG ĐIỀU KIỆN ĐỂ OS-THREAD NHANH HƠN SINGLE-THREAD")
+    print("M5 CONTROLLED SPEEDUP PROBE - KIỂM CHỨNG ĐIỀU KIỆN ĐỂ OS-THREAD NHANH HƠN SINGLE-THREAD")
     print(f"Python: {platform.python_version()} | OS: {platform.platform()} | LPs={NUM_LPS} | R={REPS} reps")
     print("=" * 116)
     print(
-        f"{'Regime':<26} | {'Engine':<11} | {'Events':>6} | {'Wall (s) ± CI95':>18} | "
+        f"{'Regime':<26} | {'Engine':<11} | {'Events':>6} | {'Wall (s) +/- CI95':>19} | "
         f"{'Speedup':>8} | {'CPU/Wall':>8} | {'ActLP':>5} | {'1LP%':>5} | {'Match':>5}"
     )
     print("-" * 116)
@@ -202,7 +202,7 @@ def main() -> None:
             })
             print(
                 f"{reg_id:<26} | {eng:<11} | {evs:6d} | "
-                f"{ci_w['mean']:7.4f} ± {ci_w['half_width']:7.4f} | "
+                f"{ci_w['mean']:7.4f} +/- {ci_w['half_width']:7.4f} | "
                 f"{speedup:7.2f}x | {ci_r['mean']:8.2f} | {act_lp:5.1f} | {pct_1:5.1f} | {'OK':>5}"
             )
         print("-" * 116)
